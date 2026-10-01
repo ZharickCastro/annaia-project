@@ -1,0 +1,30 @@
+# Angular / Node
+/node_modules
+/dist
+/tmp
+/out-tsc
+/.angular/cache
+/coverage
+npm-debug.log
+yarn-error.log
+.sass-cache/
+/connect.lock
+/libpeerconnection.log
+testem.log
+/typings
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
