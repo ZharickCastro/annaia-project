@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Anna IA: resumen del proyecto</title>
+<style>
+  :root {
+    --bg: #f7f8fb; --card: #ffffff; --ink: #1d2433; --muted: #5b6475;
+    --line: #dde2ec; --accent: #2658d6; --ok: #1f8a4c; --warn: #b26a00; --bad: #b3261e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12151c; --card: #1b2030; --ink: #e8ecf5; --muted: #a2aabd;
+      --line: #2c3346; --accent: #7ea6ff; --ok: #5fd08f; --warn: #f0b35a; --bad: #ff8a80;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12151c; --card: #1b2030; --ink: #e8ecf5; --muted: #a2aabd;
+    --line: #2c3346; --accent: #7ea6ff; --ok: #5fd08f; --warn: #f0b35a; --bad: #ff8a80;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); }
+  header { padding: 28px 20px 12px; max-width: 1000px; margin: auto; }
+  h1 { margin: 0 0 4px; font-size: 1.7rem; }
+  header p { margin: 0; color: var(--muted); }
+  nav { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--line); z-index: 2; }
+  nav div { max-width: 1000px; margin: auto; display: flex; gap: 6px; overflow-x: auto; padding: 8px 20px; }
+  nav button { border: 1px solid var(--line); background: var(--card); color: var(--ink); padding: 6px 12px; border-radius: 999px; cursor: pointer; white-space: nowrap; }
+  nav button.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  main { max-width: 1000px; margin: auto; padding: 20px; }
+  section { display: none; }
+  section.active { display: block; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+  h2 { margin-top: 0; font-size: 1.3rem; }
+  h3 { margin: 16px 0 6px; font-size: 1.05rem; }
+  code { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; font-size: 0.92em; }
+  pre { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.8rem; border: 1px solid currentColor; }
+  .ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); }
+  .search { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--ink); font: inherit; margin-bottom: 12px; }
+  .steps { display: grid; gap: 10px; }
+  .step { border: 1px solid var(--line); border-radius: 10px; padding: 12px; opacity: 0.45; transition: opacity .2s, border-color .2s; }
+  .step.on { opacity: 1; border-color: var(--accent); }
+  .step.done { opacity: 0.85; }
+  .step b { display: block; margin-bottom: 4px; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .controls button, .ask button { border: 0; background: var(--accent); color: #fff; padding: 8px 14px; border-radius: 8px; cursor: pointer; font: inherit; }
+  .controls button.secondary { background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+  .ask { display: flex; gap: 8px; margin-bottom: 10px; }
+  .ask input { flex: 1; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .metric { border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+  .metric .v { font-size: 1.4rem; font-weight: 600; }
+  .muted { color: var(--muted); }
+  .bar { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: 6px; }
+  .bar > span { display: block; height: 100%; background: var(--accent); }
+  ul { padding-left: 20px; }
+  footer { max-width: 1000px; margin: auto; padding: 0 20px 40px; color: var(--muted); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Anna IA</h1>
+  <p>Resumen de la instalación, la arquitectura y el estado del proyecto. Generado el 4 de octubre de 2026.</p>
+</header>
+
+<nav aria-label="Secciones">
+  <div id="tabs"></div>
+</nav>
+
+<main>
+
+  <section id="resumen" data-title="Resumen">
+    <div class="grid">
+      <div class="metric"><div class="muted">Modelo</div><div class="v">Qwen 3.5 9B</div><div class="muted">corre en GPU</div></div>
+      <div class="metric"><div class="muted">Biblioteca offline</div><div class="v">Wikipedia ES</div><div class="muted">12,3 GB, sin imágenes</div></div>
+      <div class="metric"><div class="muted">Primer token</div><div class="v">0,1 a 0,4 s</div><div class="muted">criterio: 2,5 s</div></div>
+      <div class="metric"><div class="muted">Respuesta completa</div><div class="v">0,3 a 1,3 s</div><div class="muted">criterio: 20 s</div></div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h2>Qué es</h2>
+      <p>Anna IA es un asistente educativo que responde preguntas de estudiantes de comunidades rurales de La Guajira, sin internet. Busca el tema en una copia offline de Wikipedia en español (Kiwix), le pasa los artículos al modelo local (Ollama) y el modelo responde en español sencillo, citando las fuentes.</p>
+      <p>Todo corre en una sola máquina: no envía datos a internet ni necesita una cuenta externa.</p>
+    </div>
+    <div class="card">
+      <h2>Estado</h2>
+      <h3>Hecho</h3>
+      <ul>
+        <li>Motor de IA local con GPU y biblioteca offline conectadas.</li>
+        <li>Backend con búsqueda en la biblioteca, conversación con historial y respaldo sin biblioteca.</li>
+        <li>Cola de peticiones, base de datos de historial y respuestas en streaming.</li>
+        <li>Frontend Angular con PWA (instalable) que lo sirve el mismo backend.</li>
+      </ul>
+      <h3>Pendiente</h3>
+      <ul>
+        <li>Prueba de carga con 20 usuarios simultáneos (el último tarda unos 20 s hoy).</li>
+        <li>Contenido etnoeducativo propio (glosario wayuunaiki y materiales), con permisos y revisión de la comunidad.</li>
+        <li>HTTPS con certificado local y acceso como <code>anna.local</code>, necesario para instalar la PWA en los equipos del aula.</li>
+        <li>Red LAN de la escuela y panel del docente con la Guía Docente.</li>
+        <li>Servicios que arranquen solos tras reiniciar (hoy se levantan a mano).</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="instalado" data-title="Qué se instaló">
+    <input class="search" id="q" placeholder="Filtrar por nombre, versión o uso..." aria-label="Filtrar" />
+    <div class="card">
+      <table id="tabla">
+        <thead><tr><th>Componente</th><th>Versión</th><th>Para qué sirve</th><th>Dónde</th></tr></thead>
+        <tbody>
+          <tr><td>ollama, ollama-cuda</td><td>0.33.3</td><td>Ejecuta el modelo de lenguaje local con aceleración CUDA</td><td>Paquete de Arch (pacman)</td></tr>
+          <tr><td>cuda, cccl, gcc15, opencl-nvidia</td><td>13.3.1 / 610.57.04</td><td>Librerías de NVIDIA que usa Ollama para la GPU. Se instalaron con el driver actualizado.</td><td>Paquete de Arch (pacman)</td></tr>
+          <tr><td>kiwix-tools (kiwix-serve)</td><td>3.8.2</td><td>Sirve la biblioteca offline por HTTP en el puerto 8080</td><td>Paquete de Arch (pacman)</td></tr>
+          <tr><td>libkiwix, libzim, xapian-core</td><td>14.2.1 / 9.8.1 / 2.1.0</td><td>Motor de lectura y búsqueda de archivos ZIM</td><td>Dependencias de kiwix-tools</td></tr>
+          <tr><td>Wikipedia ES (nopic 2026-08)</td><td>12,3 GB</td><td>Biblioteca offline: artículos de Wikipedia en español sin imágenes</td><td><code>~/kiwix-data/</code></td></tr>
+          <tr><td>qwen3.5:9b</td><td>6,6 GB</td><td>Modelo que redacta las respuestas (el único que queda instalado)</td><td>Modelos de Ollama</td></tr>
+          <tr><td>Node.js y Express</td><td>Node 26 / Express 5</td><td>Backend: buscador, conversación, cola y API</td><td><code>anaia/server.js</code></td></tr>
+          <tr><td>node:sqlite</td><td>integrado en Node</td><td>Base de datos local con el historial de preguntas</td><td><code>anaia/anna.db</code></td></tr>
+          <tr><td>Angular, Angular Material, PWA</td><td>22.2</td><td>Interfaz de chat instalable como app</td><td><code>anaia/frontend/</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Lo que se quitó</h3>
+      <p class="muted">Se borraron <code>llama3.2:3b</code> y <code>qwen2.5:7b</code> porque ocupaban espacio y ya no se usaban.</p>
+      <h3>Antes de instalar</h3>
+      <p class="muted">Se actualizó el sistema con <code>pacman -Syyu</code> para resolver errores 404 en el mirror. Luego hubo que reiniciar para que cargara el driver NVIDIA nuevo.</p>
+    </div>
+  </section>
+
+  <section id="arquitectura" data-title="Cómo funciona">
+    <div class="card">
+      <h2>Piezas y puertos</h2>
+      <table>
+        <thead><tr><th>Pieza</th><th>Dirección</th><th>Función</th></tr></thead>
+        <tbody>
+          <tr><td>Backend (Express)</td><td><code>127.0.0.1:3100</code></td><td>Recibe la pregunta, busca fuentes, arma el mensaje y devuelve la respuesta por streaming</td></tr>
+          <tr><td>Biblioteca (kiwix-serve)</td><td><code>127.0.0.1:8080</code></td><td>Búsqueda y lectura de artículos de Wikipedia offline</td></tr>
+          <tr><td>Ollama</td><td><code>127.0.0.1:11434</code></td><td>Modelo de lenguaje que genera la respuesta</td></tr>
+          <tr><td>Frontend</td><td><code>http://127.0.0.1:3100/</code></td><td>Chat en el navegador, servido por el mismo backend</td></tr>
+        </tbody>
+      </table>
+      <p class="muted">El puerto 3000 lo ocupa otro servicio (uvicorn), por eso el backend usa el 3100.</p>
+    </div>
+
+    <div class="card">
+      <h2>Recorrido de una pregunta</h2>
+      <p class="muted">Pulsa "Siguiente" para ver cada paso. El backend decide el camino según la pregunta y el historial.</p>
+      <div class="steps" id="pasos">
+        <div class="step"><b>1. Llega la pregunta</b>El navegador envía <code>question</code>, <code>history</code> (últimos 6 mensajes) y <code>previousSources</code> (fuentes de la respuesta anterior).</div>
+        <div class="step"><b>2. Saludo corto</b>Si la pregunta es una palabra de 4 letras o menos, o no tiene tema y no hay historial, responde con el saludo sin buscar nada.</div>
+        <div class="step"><b>3. Cola</b>Máximo 4 consultas activas. Hasta 40 esperan. Si se llena, responde 503.</div>
+        <div class="step"><b>4. Título exacto</b>Busca en Kiwix artículos cuyo título coincida con frases de la pregunta ("Volcán", "Simón Bolívar"). Ignora palabras comunes como "qué", "tipo" o "hablame".</div>
+        <div class="step"><b>5. Búsqueda de texto</b>Si no hay título exacto, busca con las palabras clave. Descarta anexos, listas y desambiguaciones.</div>
+        <div class="step"><b>6. Seguimiento</b>Si la pregunta no tiene tema ("¿qué más me puedes decir de él?"), reutiliza las fuentes de la respuesta anterior.</div>
+        <div class="step"><b>7. Modelo</b>Ollama recibe el contexto (hasta 1.500 caracteres por artículo), el historial y la pregunta. Temperatura 0, sin razonamiento interno. La respuesta llega palabra por palabra.</div>
+        <div class="step"><b>8. Registro</b>Se guarda la pregunta, la respuesta, las fuentes y el tiempo en <code>anna.db</code>.</div>
+      </div>
+      <div class="controls">
+        <button id="sig">Siguiente paso</button>
+        <button class="secondary" id="ini">Reiniciar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Modos de respuesta</h2>
+      <table>
+        <thead><tr><th>Modo</th><th>Cuándo</th><th>Qué ve el estudiante</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag ok">biblioteca</span></td><td>Kiwix responde</td><td>Respuesta con fuentes</td></tr>
+          <tr><td><span class="tag warn">modelo</span></td><td>Kiwix no responde</td><td>Aviso: "La biblioteca no está disponible. Esta respuesta viene del modelo y no está verificada."</td></tr>
+          <tr><td><span class="tag">conversación</span></td><td>Pregunta sin tema, con historial</td><td>Respuesta basada en la conversación, sin fuentes</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Probar la API</h2>
+      <p class="muted">Escribe una pregunta y el servidor responde (tiene que estar corriendo el backend).</p>
+      <div class="ask">
+        <input id="pregunta" value="¿Qué es un volcán?" aria-label="Pregunta" />
+        <button id="enviar">Preguntar</button>
+      </div>
+      <pre id="salida" class="muted">Sin respuesta todavía.</pre>
+    </div>
+  </section>
+
+  <section id="pruebas" data-title="Pruebas y rendimiento">
+    <div class="card">
+      <h2>Velocidad con GPU (qwen3.5:9b)</h2>
+      <table>
+        <thead><tr><th>Pregunta</th><th>Primer token</th><th>Respuesta completa</th></tr></thead>
+        <tbody>
+          <tr><td>¿Qué es un volcán?</td><td>0,11 s</td><td>0,80 s</td></tr>
+          <tr><td>¿Qué es la fotosíntesis?</td><td>0,11 s</td><td>1,33 s</td></tr>
+          <tr><td>¿Cuál es la capital de Colombia?</td><td>0,14 s</td><td>0,75 s</td></tr>
+          <tr><td>¿Quién fue Simón Bolívar?</td><td>0,15 s</td><td>0,88 s</td></tr>
+        </tbody>
+      </table>
+      <p class="muted">Primera consulta después de cargar el modelo: unos 1,5 s. Criterio del documento: primer token en 2,5 s y respuesta completa en 20 s.</p>
+    </div>
+    <div class="card">
+      <h2>Carga: 12 peticiones en paralelo</h2>
+      <p>Las 12 terminaron con HTTP 200. Pero las respuestas llegan escalonadas: la primera a 1,1 s y la última a unos 20 s. La GPU procesa un ritmo fijo de tokens, así que el cuello de botella está en el cómputo, no en la cola.</p>
+      <p class="muted">Criterio de 20 usuarios con respuesta en menos de 20 s: <span class="warn">aún no se cumple</span>. Opciones: modelo más pequeño, menos contexto por artículo o limitar la longitud de la respuesta.</p>
+    </div>
+    <div class="card">
+      <h2>Problemas conocidos</h2>
+      <ul>
+        <li>Algunas preguntas dicen "no encuentro" porque el dato está después de los primeros 1.500 caracteres del artículo (por ejemplo, la clasificación de volcanes).</li>
+        <li>Títulos de obras en inglés salen sin traducir en algunas respuestas.</li>
+        <li>Búsqueda sin tildes: puede borrar diferencias de escritura en palabras wayuu (ü, apóstrofes).</li>
+        <li>El modelo a veces agrega datos que no están en el contexto; el prompt lo reduce pero no lo elimina.</li>
+        <li>Los saludos de una palabra corta (4 letras o menos) se tratan como saludo, incluso si son un tema.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="operacion" data-title="Operación">
+    <div class="card">
+      <h2>Arrancar los servicios</h2>
+      <p class="muted">Tras reiniciar la máquina, nada arranca solo. Desde <code>~/</code>:</p>
+<pre>ollama serve &amp;
+cd ~/kiwix-data &amp;&amp; kiwix-serve --port=8080 --address=127.0.0.1 wikipedia_es_all_nopic_2026-08.zim &amp;
+cd ~/anaia &amp;&amp; PORT=3100 node server.js &amp;</pre>
+      <p>Para revisar el estado: <code>curl http://127.0.0.1:3100/health</code> responde <code>{"kiwix":true,"ollama":true,...}</code>.</p>
+    </div>
+    <div class="card">
+      <h2>Variables de configuración</h2>
+      <table>
+        <thead><tr><th>Variable</th><th>Valor por defecto</th><th>Qué controla</th></tr></thead>
+        <tbody>
+          <tr><td><code>MODEL</code></td><td>qwen3.5:9b</td><td>Modelo de Ollama</td></tr>
+          <tr><td><code>PORT</code></td><td>3000</td><td>Puerto del backend (en esta máquina se usa 3100)</td></tr>
+          <tr><td><code>MAX_CONCURRENT</code></td><td>4</td><td>Consultas activas a la vez</td></tr>
+          <tr><td><code>MAX_WAITING</code></td><td>40</td><td>Consultas en espera antes de responder 503</td></tr>
+          <tr><td><code>KIWIX_BOOK</code></td><td>wikipedia_es_all_nopic_2026-08</td><td>Libro que se consulta en Kiwix</td></tr>
+          <tr><td><code>DB_PATH</code></td><td>anna.db</td><td>Archivo de la base de datos</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h2>Archivos del proyecto</h2>
+      <ul>
+        <li><code>server.js</code>: backend completo (búsqueda, conversación, cola, base de datos y API).</li>
+        <li><code>frontend/src/app/</code>: componente del chat (<code>app.ts</code>, <code>app.html</code>, <code>app.css</code>).</li>
+        <li><code>frontend/dist/frontend/browser/</code>: versión compilada que sirve el backend. Se regenera con <code>npx ng build</code>.</li>
+        <li><code>anna.db</code>: historial de preguntas.</li>
+        <li><code>docs/anna-ia-resumen.html</code>: este documento.</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Anna IA · Documento generado con Claude Code. Los datos de rendimiento son de pruebas en esta máquina (RTX 4070 Ti SUPER); el hardware de la escuela puede ser más lento.
+</footer>
+
+<script>
+  const sections = [...document.querySelectorAll('section')];
+  const tabs = document.getElementById('tabs');
+  function show(id) {
+    sections.forEach(s => s.classList.toggle('active', s.id === id));
+    tabs.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.id === id));
+    history.replaceState(null, '', '#' + id);
+  }
+  sections.forEach(s => {
+    const b = document.createElement('button');
+    b.textContent = s.dataset.title;
+    b.dataset.id = s.id;
+    b.addEventListener('click', () => show(s.id));
+    tabs.appendChild(b);
+  });
+  show(location.hash.slice(1) || 'resumen');
+
+  const q = document.getElementById('q');
+  q.addEventListener('input', () => {
+    const term = q.value.trim().toLowerCase();
+    document.querySelectorAll('#tabla tbody tr').forEach(tr => {
+      tr.style.display = tr.textContent.toLowerCase().includes(term) ? '' : 'none';
+    });
+  });
+
+  const pasos = [...document.querySelectorAll('#pasos .step')];
+  let actual = -1;
+  function paso(n) {
+    pasos.forEach((p, i) => {
+      p.classList.toggle('on', i === n);
+      p.classList.toggle('done', i < n);
+    });
+  }
+  document.getElementById('sig').addEventListener('click', () => {
+    actual = Math.min(actual + 1, pasos.length - 1);
+    paso(actual);
+  });
+  document.getElementById('ini').addEventListener('click', () => {
+    actual = -1;
+    pasos.forEach(p => p.classList.remove('on', 'done'));
+  });
+
+  document.getElementById('enviar').addEventListener('click', async () => {
+    const salida = document.getElementById('salida');
+    const question = document.getElementById('pregunta').value.trim();
+    if (!question) return;
+    salida.textContent = 'Consultando...';
+    try {
+      const res = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        salida.textContent = data.error ?? 'Error ' + res.status;
+        return;
+      }
+      salida.textContent = '';
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        salida.textContent += dec.decode(value, { stream: true });
+      }
+    } catch {
+      salida.textContent = 'No hay conexión con el backend. Revisa que esté corriendo en http://127.0.0.1:3100.';
+    }
+  });
+</script>
+</body>
+</html>
