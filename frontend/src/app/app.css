@@ -1,0 +1,79 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+.title {
+  margin-left: 8px;
+  font-weight: 500;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  max-width: 760px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.log {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 8px;
+}
+
+.hint {
+  color: #666;
+  text-align: center;
+  margin-top: 32px;
+}
+
+.bubble {
+  align-self: flex-start;
+  max-width: 85%;
+  background: #eef2f7;
+  border-radius: 12px;
+  padding: 10px 14px;
+  white-space: pre-wrap;
+}
+
+.bubble.user {
+  align-self: flex-end;
+  background: #d6e4ff;
+}
+
+.bubble p {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+.sources {
+  display: block;
+  margin-top: 6px;
+  color: #555;
+}
+
+.ask {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.ask mat-form-field {
+  flex: 1;
+}
+
+@media (max-width: 400px) {
+  main {
+    padding: 12px;
+  }
+}
