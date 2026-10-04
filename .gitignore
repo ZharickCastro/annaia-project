@@ -28,3 +28,6 @@ Thumbs.db
 
 # Env
 .env
+
+# Variables de entorno
+.env
