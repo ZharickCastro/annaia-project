@@ -1,33 +1,23 @@
-# Angular / Node
-/node_modules
-/dist
-/tmp
-/out-tsc
-/.angular/cache
-/coverage
-npm-debug.log
-yarn-error.log
-.sass-cache/
-/connect.lock
-/libpeerconnection.log
-testem.log
-/typings
+# Dependencias
+node_modules/
 
-# IDE
-.idea/
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.sublime-workspace
+# Compilados y caché
+dist/
+.angular/
 
-# OS
-.DS_Store
-Thumbs.db
+# Datos locales y de prueba
+anna.db*
 
-# Env
-.env
+# Configuración local de Claude Code
+.claude/
+
+# Logs
+*.log
 
 # Variables de entorno
 .env
+
+# IDE / SO
+.idea/
+.DS_Store
+Thumbs.db

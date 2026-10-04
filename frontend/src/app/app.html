@@ -1,0 +1,33 @@
+<mat-toolbar color="primary">
+  <span class="title">Anna IA</span>
+</mat-toolbar>
+
+<main>
+  <section #log class="log">
+    @if (messages().length === 0) {
+      <p class="hint">Escribe una pregunta, por ejemplo: "¿Qué es la fotosíntesis?"</p>
+    }
+    @for (m of messages(); track $index) {
+      <div class="bubble" [class.user]="m.role === 'user'">
+        <p>{{ m.text }}</p>
+        @if (m.role === 'assistant' && m.sources?.length) {
+          <small class="sources">Fuentes: {{ m.sources!.join(', ') }}</small>
+        }
+      </div>
+    }
+  </section>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+  }
+
+  <form class="ask" (ngSubmit)="ask()">
+    <mat-form-field appearance="outline">
+      <mat-label>Tu pregunta</mat-label>
+      <input matInput name="question" [(ngModel)]="question" autocomplete="off" [disabled]="loading()" />
+    </mat-form-field>
+    <button mat-flat-button color="primary" type="submit" [disabled]="loading() || !question.trim()">
+      Enviar
+    </button>
+  </form>
+</main>
