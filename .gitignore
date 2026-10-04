@@ -1,7 +1,15 @@
+# Dependencias
 node_modules/
-frontend/node_modules/
-frontend/dist/
-frontend/.angular/
+
+# Compilados y caché
+dist/
+.angular/
+
+# Datos locales y de prueba
 anna.db*
+
+# Configuración local de Claude Code
 .claude/
+
+# Logs
 *.log
