@@ -1,11 +1,11 @@
 {
   "/api": {
-    "target": "http://192.168.68.59:3100",
+    "target": "http://192.168.68.60:3100",
     "secure": false,
     "changeOrigin": true
   },
   "/health": {
-    "target": "http://192.168.68.59:3100",
+    "target": "http://192.168.68.60:3100",
     "secure": false,
     "changeOrigin": true
   }
