@@ -10,6 +10,7 @@ const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://127.0.0.1:11434';
 const MODEL = process.env.MODEL ?? 'qwen3.5:9b';
 const BOOK = process.env.KIWIX_BOOK ?? 'wikipedia_es_all_nopic_2026-08';
 const PORT = Number(process.env.PORT ?? 3000);
+const HOST = process.env.HOST ?? '127.0.0.1';
 const DB_PATH = process.env.DB_PATH ?? 'anna.db';
 const MAX_CONCURRENT = Number(process.env.MAX_CONCURRENT ?? 4);
 const MAX_WAITING = Number(process.env.MAX_WAITING ?? 40);
@@ -322,6 +323,6 @@ app.post('/api/ask', async (req, res) => {
   }
 });
 
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`Anna IA backend en http://127.0.0.1:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Anna IA backend en http://${HOST}:${PORT}`);
 });
