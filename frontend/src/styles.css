@@ -56,6 +56,7 @@ a { color: inherit; text-decoration: none; }
   width: 40px; height: 40px; border-radius: 50%;
   background: var(--acento); color: #fff; font-weight: 700;
   box-shadow: 0 0 0 3px var(--acento-claro);
+  object-fit: cover;
 }
 .avatar-sm { width: 32px; height: 32px; font-size: .85rem; }
 .avatar-lg { width: 72px; height: 72px; font-size: 1.8rem; }
