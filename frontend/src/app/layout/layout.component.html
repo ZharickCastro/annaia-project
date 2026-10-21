@@ -1,0 +1,52 @@
+<aside class="barra">
+  <div class="marca">
+    <span class="avatar" aria-hidden="true">A</span>
+    <div>
+      <strong>Anna IA</strong>
+      <small>Asistente de Aprendizaje Offline</small>
+    </div>
+  </div>
+
+  <nav>
+    @for (enlace of enlaces; track enlace.ruta) {
+      <a [routerLink]="enlace.ruta" routerLinkActive="activo">
+        <app-icono [nombre]="enlace.icono" />
+        <span>{{ enlace.texto }}</span>
+      </a>
+    }
+    @if (sesion.esDocente()) {
+      <a routerLink="/docente" routerLinkActive="activo">
+        <app-icono nombre="docente" />
+        <span>Panel docente</span>
+      </a>
+    }
+  </nav>
+
+  <button type="button" class="salir" (click)="salir()">
+    <app-icono nombre="salir" />
+    <span>Salir</span>
+  </button>
+</aside>
+
+<div class="contenido">
+  <header class="encabezado">
+    <h1>{{ titulo() }}</h1>
+    <div class="lector">
+      @if (sesion.usuario(); as usuario) {
+        <span class="usuario">
+          {{ usuario.nombre }} · {{ usuario.rol }}
+          @if (!sesion.esDocente()) {
+            · {{ consultas.total() }} {{ consultas.total() === 1 ? 'consulta' : 'consultas' }}
+          }
+        </span>
+      }
+      <span class="chip chip-ok"><span class="punto"></span>Conexión a red local</span>
+    </div>
+  </header>
+
+  <main class="pagina">
+    <router-outlet />
+  </main>
+
+  <footer class="pie">Proyecto de Innovación Educativa Rural · COM30 · Grupo 2</footer>
+</div>

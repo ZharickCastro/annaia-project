@@ -1,0 +1,9 @@
+<p class="suave">Historial de preguntas realizadas a Anna IA. Toca una para volver a preguntarla.</p>
+
+<section class="tarjeta lista">
+  @for (consulta of consultas.historial(); track consulta.id) {
+    <app-tarjeta-consulta [consulta]="consulta" (abrir)="abrir($event)" />
+  } @empty {
+    <p class="suave vacio-lista">Aún no has hecho consultas. Empieza en Anna IA.</p>
+  }
+</section>
