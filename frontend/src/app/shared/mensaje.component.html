@@ -1,0 +1,13 @@
+@if (mensaje().rol === 'assistant') {
+  <span class="avatar avatar-sm" aria-hidden="true">A</span>
+}
+<div class="burbuja">
+  @if (mensaje().texto) {
+    <p>{{ mensaje().texto }}</p>
+  } @else {
+    <p class="escribiendo">Anna está escribiendo…</p>
+  }
+  @if (mensaje().fuentes?.length) {
+    <small class="fuentes">Fuentes: {{ mensaje().fuentes!.join(', ') }}</small>
+  }
+</div>
