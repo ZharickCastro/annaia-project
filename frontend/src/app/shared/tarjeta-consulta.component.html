@@ -1,0 +1,16 @@
+<button type="button" class="fila-consulta" (click)="abrir.emit(consulta().id)">
+  <span class="icono-fila"><app-icono nombre="anna" /></span>
+  <span class="cuerpo">
+    <span class="pregunta">{{ consulta().pregunta }}</span>
+    <small class="detalle">
+      @if (estudiante()) {
+        {{ estudiante() }} ·
+      }
+      {{ consulta().fecha | date: 'd MMM y, h:mm a' }}
+      @if (!consulta().respondida) {
+        <span class="chip chip-alerta">Sin respuesta</span>
+      }
+    </small>
+  </span>
+  <small class="tiempo">{{ consulta().fecha | tiempoRelativo }}</small>
+</button>

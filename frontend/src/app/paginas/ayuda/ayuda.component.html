@@ -1,0 +1,10 @@
+<p class="suave">Preguntas frecuentes y soporte.</p>
+
+<section class="ayuda">
+  @for (item of preguntas; track item.pregunta) {
+    <details class="tarjeta">
+      <summary>{{ item.pregunta }}</summary>
+      <p>{{ item.respuesta }}</p>
+    </details>
+  }
+</section>

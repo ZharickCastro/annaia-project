@@ -1,0 +1,30 @@
+<section class="tarjeta bienvenida">
+  <img src="/img/anna.jpeg" alt="Anna IA" class="avatar avatar-lg" />
+  <div>
+    <h2>{{ configuracion.saludo() }} Bienvenido de nuevo, {{ sesion.usuario()?.nombre }}</h2>
+    <p class="suave">
+      Anna IA te acompaña a aprender matemáticas, ciencias, español, historia y cultura wayúu, sin necesitar conexión a
+      internet.
+    </p>
+  </div>
+  <a class="boton-principal" routerLink="/anna">Preguntar a Anna</a>
+</section>
+
+<h3>Accesos rápidos</h3>
+<div class="rejilla">
+  @for (acceso of accesos; track acceso.ruta) {
+    <app-acceso-rapido
+      [titulo]="acceso.titulo"
+      [descripcion]="acceso.descripcion"
+      [ruta]="acceso.ruta"
+      [icono]="acceso.icono"
+    />
+  }
+</div>
+
+<h3>Preguntas frecuentes para empezar</h3>
+<div class="chips">
+  @for (pregunta of preguntas; track pregunta) {
+    <a class="chip chip-boton" routerLink="/anna" [queryParams]="{ q: pregunta }">{{ pregunta }}</a>
+  }
+</div>

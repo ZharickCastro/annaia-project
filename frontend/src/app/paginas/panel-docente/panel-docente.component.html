@@ -1,0 +1,61 @@
+<p class="suave">Qué preguntó tu grupo y qué temas no encontró la biblioteca.</p>
+
+<div class="rejilla indicadores">
+  <div class="tarjeta indicador">
+    <strong>{{ consultas.historialGrupo().length }}</strong>
+    <small>Consultas del grupo</small>
+  </div>
+  <div class="tarjeta indicador">
+    <strong>{{ consultas.estudiantesActivos() }}</strong>
+    <small>Estudiantes activos</small>
+  </div>
+  <div class="tarjeta indicador">
+    <strong>{{ consultas.sinRespuesta().length }}</strong>
+    <small>Sin respuesta en la biblioteca</small>
+  </div>
+</div>
+
+<div class="panel">
+  <section>
+    <div class="titulo-seccion">
+      <h3>Consultas</h3>
+      <label class="filtro">
+        <input type="checkbox" [checked]="soloSinRespuesta()" (change)="soloSinRespuesta.set(!soloSinRespuesta())" />
+        Solo sin respuesta
+      </label>
+    </div>
+    <div class="tarjeta lista">
+      @for (consulta of lista(); track consulta.id) {
+        <app-tarjeta-consulta
+          [consulta]="consulta"
+          [estudiante]="consultas.nombreDe(consulta.usuarioId)"
+          (abrir)="seleccionada.set($event)"
+        />
+      } @empty {
+        <p class="suave vacio-lista">No hay consultas para mostrar.</p>
+      }
+    </div>
+  </section>
+
+  <aside>
+    @if (detalle(); as consulta) {
+      <h3>Respuesta de Anna</h3>
+      <div class="tarjeta detalle-consulta">
+        <strong>{{ consulta.pregunta }}</strong>
+        <p>{{ consulta.respuesta }}</p>
+        @if (consulta.fuentes.length) {
+          <small class="suave">Fuentes: {{ consulta.fuentes.join(', ') }}</small>
+        }
+      </div>
+    }
+    <h3>Temas más consultados</h3>
+    <ol class="tarjeta temas">
+      @for (tema of consultas.temasTop(); track tema.nombre) {
+        <li>
+          <span>{{ tema.nombre }}</span>
+          <span class="chip">{{ tema.veces }}</span>
+        </li>
+      }
+    </ol>
+  </aside>
+</div>

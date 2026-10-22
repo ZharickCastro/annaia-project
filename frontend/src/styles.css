@@ -1,2 +1,200 @@
-html, body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; }
-/* You can add global styles to this file, and also import other style files */
+/* Estilos globales de Anna IA. Solo fuentes del sistema: nada se descarga de internet. */
+:root {
+  --fondo: #fdf8f3;
+  --superficie: #ffffff;
+  --borde: #f0e4d7;
+  --texto: #2b2622;
+  --suave: #7a6f66;
+  --acento: #e8790f;
+  --acento-claro: #fdecd9;
+  --ok: #2e7d32;
+  --ok-claro: #e3f3e4;
+  --alerta: #b3261e;
+  --alerta-claro: #fbe4e2;
+  --radio: 14px;
+  --franja: repeating-linear-gradient(90deg, #e8790f 0 14px, #2e7d32 14px 22px, #b3261e 22px 30px, #2b2622 30px 34px);
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--fondo);
+  color: var(--texto);
+}
+
+* { box-sizing: border-box; }
+h1, h2, h3 { margin: 0; }
+h3 { font-size: 1rem; margin: 24px 0 12px; }
+p { line-height: 1.5; }
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+a { color: inherit; text-decoration: none; }
+.suave { color: var(--suave); margin: 0 0 16px; }
+
+/* ---------- Piezas comunes ---------- */
+.tarjeta {
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  padding: 16px;
+}
+.tarjeta-enlace {
+  display: flex; flex-direction: column; gap: 6px; text-align: left; width: 100%;
+  transition: border-color .15s, transform .15s;
+}
+.tarjeta-enlace:hover { border-color: var(--acento); transform: translateY(-2px); }
+.tarjeta-enlace small { color: var(--suave); }
+.rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.insignia {
+  display: inline-flex; width: 36px; height: 36px; border-radius: 10px;
+  align-items: center; justify-content: center; background: var(--acento-claro); color: var(--acento);
+}
+.avatar {
+  display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--acento); color: #fff; font-weight: 700;
+  box-shadow: 0 0 0 3px var(--acento-claro);
+  object-fit: cover;
+}
+.avatar-sm { width: 32px; height: 32px; font-size: .85rem; }
+.avatar-lg { width: 72px; height: 72px; font-size: 1.8rem; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px;
+  background: var(--acento-claro); color: var(--texto); font-size: .8rem; white-space: nowrap;
+}
+.chip-ok { background: var(--ok-claro); color: var(--ok); }
+.chip-alerta { background: var(--alerta-claro); color: var(--alerta); }
+.chip-boton { background: var(--superficie); border: 1px solid var(--borde); }
+.chip-boton:hover { border-color: var(--acento); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.punto { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.boton-principal {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 10px 18px; border: none; border-radius: 10px; background: var(--acento); color: #fff; font-weight: 600;
+}
+.boton-secundario {
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+  border: 1px solid var(--borde); border-radius: 999px; background: var(--superficie); font-size: .85rem;
+}
+.boton-icono {
+  display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+  border: none; border-radius: 50%; background: var(--acento); color: #fff;
+}
+.selector { display: inline-flex; border: 1px solid var(--borde); border-radius: 999px; padding: 3px; gap: 2px; }
+.selector button { border: none; background: none; padding: 6px 14px; border-radius: 999px; }
+.selector button.activo { background: var(--acento); color: #fff; }
+input[type="text"], input[type="search"] {
+  width: 100%; padding: 10px 14px; border: 1px solid var(--borde); border-radius: 999px; background: var(--superficie);
+}
+input:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--acento); outline-offset: 2px; }
+
+/* ---------- Layout ---------- */
+app-layout { display: flex; min-height: 100dvh; }
+.barra {
+  width: 230px; flex-shrink: 0; background: var(--superficie); border-right: 1px solid var(--borde);
+  display: flex; flex-direction: column; padding: 16px 12px; gap: 16px;
+}
+.marca { display: flex; gap: 10px; align-items: center; padding: 0 6px; }
+.marca small { display: block; color: var(--suave); font-size: .72rem; }
+.barra nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+.barra nav a, .salir {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px;
+  border: none; background: none; text-align: left; color: var(--suave);
+}
+.barra nav a:hover, .salir:hover { background: var(--fondo); color: var(--texto); }
+.barra nav a.activo { background: var(--acento-claro); color: var(--acento); font-weight: 600; }
+.contenido { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.encabezado {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 14px 28px; background: var(--superficie); border-bottom: 4px solid transparent;
+  border-image: var(--franja) 1;
+}
+.encabezado h1 { font-size: 1.15rem; }
+.lector { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.usuario { font-size: .85rem; color: var(--suave); }
+.pagina { flex: 1; width: 100%; max-width: 980px; margin: 0 auto; padding: 24px 28px; }
+.pie { text-align: center; font-size: .75rem; color: var(--suave); padding: 12px; }
+
+/* ---------- Ingreso ---------- */
+.ingreso { min-height: 100dvh; display: grid; place-items: center; padding: 16px; }
+.ingreso-tarjeta { width: min(400px, 100%); display: flex; flex-direction: column; gap: 10px; text-align: center; align-items: center; }
+.ingreso-tarjeta label, .etiqueta { align-self: flex-start; font-weight: 600; font-size: .9rem; margin-top: 8px; }
+.ingreso-tarjeta .boton-principal { width: 100%; margin-top: 12px; }
+.error { color: var(--alerta); align-self: flex-start; }
+
+/* ---------- Inicio ---------- */
+.bienvenida { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.bienvenida > div { flex: 1; min-width: 220px; }
+.bienvenida h2 { font-size: 1.25rem; margin-bottom: 6px; }
+.bienvenida p { margin: 0; }
+.buscador { max-width: 420px; margin-bottom: 20px; }
+
+/* ---------- Chat ---------- */
+.chat { display: flex; flex-direction: column; height: calc(100dvh - 190px); min-height: 420px; padding: 0; overflow: hidden; }
+.chat-cabecera { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--borde); }
+.chat-cabecera > div { flex: 1; }
+.estado-linea { display: block; color: var(--ok); font-size: .75rem; }
+.registro { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.vacio { margin: auto; text-align: center; max-width: 560px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.vacio p { margin: 0; }
+.vacio .chips { justify-content: center; margin-top: 12px; }
+app-mensaje { display: flex; gap: 8px; align-items: flex-end; max-width: 85%; }
+app-mensaje.propio { align-self: flex-end; }
+.burbuja { background: var(--fondo); border: 1px solid var(--borde); border-radius: 14px 14px 14px 4px; padding: 10px 14px; white-space: pre-wrap; }
+app-mensaje.propio .burbuja { background: var(--acento); color: #fff; border: none; border-radius: 14px 14px 4px 14px; }
+.burbuja p { margin: 0; }
+.escribiendo { color: var(--suave); font-style: italic; }
+.fuentes { display: block; margin-top: 6px; color: var(--suave); font-size: .75rem; }
+.campo { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--borde); }
+
+/* ---------- Listas de consultas ---------- */
+.lista { padding: 4px 0; }
+.fila-consulta {
+  display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px;
+  border: none; border-bottom: 1px solid var(--borde); background: none; text-align: left;
+}
+app-tarjeta-consulta:last-child .fila-consulta { border-bottom: none; }
+.fila-consulta:hover { background: var(--fondo); }
+.icono-fila { color: var(--acento); }
+.cuerpo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.detalle { color: var(--suave); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tiempo { color: var(--suave); white-space: nowrap; }
+.vacio-lista { padding: 16px; margin: 0; }
+
+/* ---------- Configuración y ayuda ---------- */
+.ajustes { padding: 0 16px; }
+.ajuste { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--borde); }
+.ajuste:last-child { border-bottom: none; }
+.ajuste small { display: block; color: var(--suave); }
+.interruptor { width: 44px; height: 24px; border-radius: 999px; border: none; background: var(--borde); position: relative; }
+.interruptor::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; }
+.interruptor[aria-checked="true"] { background: var(--acento); }
+.interruptor[aria-checked="true"]::after { left: 23px; }
+.ayuda { display: flex; flex-direction: column; gap: 12px; }
+.ayuda summary { font-weight: 600; cursor: pointer; }
+.ayuda p { margin: 10px 0 0; color: var(--suave); }
+
+/* ---------- Panel docente ---------- */
+.indicador strong { display: block; font-size: 1.8rem; color: var(--acento); }
+.indicador small { color: var(--suave); }
+.panel { display: grid; grid-template-columns: 1fr 280px; gap: 20px; }
+.titulo-seccion { display: flex; justify-content: space-between; align-items: center; }
+.filtro { display: flex; gap: 6px; align-items: center; font-size: .85rem; color: var(--suave); }
+.temas { list-style: none; margin: 0; padding: 8px 16px; }
+.temas li { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--borde); }
+.temas li:last-child { border-bottom: none; }
+.detalle-consulta p { margin: 8px 0; }
+
+/* ---------- Pantallas pequeñas ---------- */
+@media (max-width: 760px) {
+  app-layout { flex-direction: column; }
+  .barra { width: 100%; border-right: none; border-bottom: 1px solid var(--borde); padding: 10px; gap: 8px; }
+  .barra nav { flex-direction: row; overflow-x: auto; }
+  .barra nav a span, .salir span { display: none; }
+  .salir { position: absolute; top: 10px; right: 10px; }
+  .encabezado, .pagina { padding-left: 16px; padding-right: 16px; }
+  .panel { grid-template-columns: 1fr; }
+  app-mensaje { max-width: 100%; }
+}

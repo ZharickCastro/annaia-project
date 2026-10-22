@@ -1,0 +1,22 @@
+<section class="ingreso">
+  <form class="tarjeta ingreso-tarjeta" (submit)="entrar($event)">
+    <img src="/img/anna.jpeg" alt="Anna IA" class="avatar avatar-lg" />
+    <h1>¡Asajaa! Soy Anna IA</h1>
+    <p class="suave">Tu asistente educativo. Funciona en la red del aula, sin internet.</p>
+
+    <label for="nombre">¿Cómo te llamas?</label>
+    <input id="nombre" type="text" autocomplete="off" maxlength="60" [value]="nombre()" (input)="alEscribir($event)" />
+    @if (nombre() && !nombreValido()) {
+      <small class="error">Escribe un nombre de 3 a 60 letras.</small>
+    }
+
+    <span class="etiqueta">Ingreso como</span>
+    <div class="selector">
+      @for (opcion of roles; track opcion) {
+        <button type="button" [class.activo]="rol() === opcion" (click)="rol.set(opcion)">{{ opcion }}</button>
+      }
+    </div>
+
+    <button type="submit" class="boton-principal" [disabled]="!nombreValido()">Entrar</button>
+  </form>
+</section>
