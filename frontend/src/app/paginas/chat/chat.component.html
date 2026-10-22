@@ -1,0 +1,42 @@
+<section class="tarjeta chat">
+  <div class="chat-cabecera">
+    <img src="/img/anna.jpeg" alt="Anna IA" class="avatar avatar-sm" />
+    <div>
+      <strong>Anna IA</strong>
+      <small class="estado-linea">En línea · Offline</small>
+    </div>
+    <button
+      type="button"
+      class="boton-secundario"
+      (click)="consultas.nuevaConversacion()"
+      [disabled]="consultas.cargando() || consultas.mensajes().length === 0"
+    >
+      <app-icono nombre="nueva" /> Nueva consulta
+    </button>
+  </div>
+
+  <div #registro class="registro">
+    @if (consultas.mensajes().length === 0) {
+      <div class="vacio">
+        <img src="/img/anna.jpeg" alt="Anna IA" class="avatar avatar-lg" />
+        <h2>¡Asajaa!</h2>
+        <p><strong>Soy Anna IA, tu asistente educativo.</strong></p>
+        <p class="suave">
+          Puedo ayudarte en matemáticas, ciencias, español, historia, cultura wayúu y muchas otras áreas, sin conexión a
+          internet.
+        </p>
+        <div class="chips">
+          @for (sugerencia of sugerencias; track sugerencia) {
+            <button type="button" class="chip chip-boton" (click)="preguntar(sugerencia)">{{ sugerencia }}</button>
+          }
+        </div>
+      </div>
+    } @else {
+      @for (mensaje of consultas.mensajes(); track $index) {
+        <app-mensaje [mensaje]="mensaje" />
+      }
+    }
+  </div>
+
+  <app-campo-pregunta [deshabilitado]="consultas.cargando()" (enviar)="preguntar($event)" />
+</section>

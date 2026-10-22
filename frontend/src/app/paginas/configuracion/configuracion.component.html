@@ -1,0 +1,70 @@
+<p class="suave">Personaliza tu experiencia con Anna IA.</p>
+
+<section class="tarjeta ajustes">
+  <div class="ajuste">
+    <div>
+      <strong>Servidor local</strong>
+      <small>{{ servidor }}</small>
+    </div>
+    @switch (estado()) {
+      @case ('activo') {
+        <span class="chip chip-ok">Activo</span>
+      }
+      @case ('sin-conexion') {
+        <span class="chip chip-alerta">Sin conexión</span>
+      }
+      @default {
+        <span class="chip">Revisando…</span>
+      }
+    }
+  </div>
+
+  <div class="ajuste">
+    <div>
+      <strong>Idioma</strong>
+      <small>Elige el idioma del saludo</small>
+    </div>
+    <div class="selector">
+      @for (idioma of idiomas; track idioma) {
+        <button
+          type="button"
+          [class.activo]="configuracion.idioma() === idioma"
+          (click)="configuracion.cambiarIdioma(idioma)"
+        >
+          {{ idioma }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="ajuste">
+    <div>
+      <strong>Tamaño de texto</strong>
+      <small>{{ configuracion.tamanoTexto() }} %</small>
+    </div>
+    <input
+      type="range"
+      min="90"
+      max="130"
+      step="10"
+      aria-label="Tamaño de texto"
+      [value]="configuracion.tamanoTexto()"
+      (input)="alCambiarTamano($event)"
+    />
+  </div>
+
+  <div class="ajuste">
+    <div>
+      <strong>Notificaciones</strong>
+      <small>Avisos de nuevo contenido offline</small>
+    </div>
+    <button
+      type="button"
+      class="interruptor"
+      role="switch"
+      [attr.aria-checked]="configuracion.notificaciones()"
+      aria-label="Notificaciones"
+      (click)="configuracion.alternarNotificaciones()"
+    ></button>
+  </div>
+</section>

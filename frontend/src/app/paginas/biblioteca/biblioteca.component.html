@@ -1,0 +1,18 @@
+<p class="suave">Contenido educativo disponible sin conexión: Wikipedia en español offline, servida con Kiwix.</p>
+
+<input
+  class="buscador"
+  type="search"
+  placeholder="Buscar en la biblioteca…"
+  aria-label="Buscar materia"
+  [value]="busqueda()"
+  (input)="alBuscar($event)"
+/>
+
+<div class="rejilla">
+  @for (materia of materias(); track materia.nombre) {
+    <app-materia-card [materia]="materia" (elegir)="abrir($event)" />
+  } @empty {
+    <p class="suave">No hay materias que coincidan con "{{ busqueda() }}".</p>
+  }
+</div>

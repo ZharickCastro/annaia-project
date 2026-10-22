@@ -1,0 +1,15 @@
+<form class="campo" (submit)="alEnviar($event)">
+  <input
+    type="text"
+    placeholder="Escribe tu pregunta aquí…"
+    aria-label="Tu pregunta"
+    autocomplete="off"
+    maxlength="500"
+    [value]="texto()"
+    (input)="alEscribir($event)"
+    [disabled]="deshabilitado()"
+  />
+  <button type="submit" class="boton-icono" aria-label="Enviar" [disabled]="deshabilitado() || !texto().trim()">
+    <app-icono nombre="enviar" />
+  </button>
+</form>
