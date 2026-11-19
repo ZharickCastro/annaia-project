@@ -33,6 +33,9 @@ const SYSTEM_PROMPT_NO_LIBRARY =
   'Eres Anna IA, un asistente educativo para estudiantes de comunidades rurales. ' +
   'Responde en español, con frases sencillas y en texto plano, y de forma breve.';
 
+const BRIEF = 'Contesta directamente en 2 o 3 frases cortas, hasta 50 palabras. Termina la última frase.';
+const DETAILED = 'Amplía la explicación con información nueva en un párrafo de hasta 90 palabras. Termina la última frase.';
+
 const NO_LIBRARY_NOTE =
   'La biblioteca no está disponible. Esta respuesta viene del modelo y no está verificada.\n\n';
 
@@ -151,6 +154,20 @@ function hasTopic(question) {
   return keywordsOf(question).length > 0 || titleCandidates(question).length > 0;
 }
 
+const DETAIL_REQUEST = /\b(detall\w*|profund\w*|ampli\w*|mas (?:informacion|sobre|acerca)|(?:cuent\w*|contar\w*|explica\w*|habl\w*|dime|decir\w*|saber) (?:un poco )?mas)\b/;
+const FOLLOWUP_WORDS = new Set(
+  ('detalle detalles informacion tema esto eso ello este ese mismo anterior respecto favor acerca ' +
+   'hablar hablarme hable contar contarme decirme amplia amplialo profundiza profundizar cuenteme ' +
+   'podrias podria dar darme des sabes poco ellos ellas clases clasifica clasifican ' +
+   'clasificacion tienen tiene forman funciona funcionan sirve sirven origina originan produce producen ' +
+   'caracteristicas principales existen diferencia diferencias').split(' '),
+);
+
+function needsTopic(question) {
+  const words = keywordsOf(question);
+  return words.every((word) => FOLLOWUP_WORDS.has(word));
+}
+
 async function directHits(question) {
   const found = [];
   for (const title of titleCandidates(question)) {
@@ -162,7 +179,7 @@ async function directHits(question) {
   return found;
 }
 
-async function findSources(question, previousSources) {
+async function findSources(question) {
   const found = await directHits(question);
   if (found.length > 0) return found;
 
@@ -171,42 +188,50 @@ async function findSources(question, previousSources) {
   const related = hits.filter((h) => h.hits > 0);
   if (related.length > 0) return related.slice(0, TOP_K);
 
-  if (previousSources.length > 0) {
-    const reused = [];
-    for (const title of previousSources) {
-      const hit = await articleByTitle(title);
-      if (hit && reused.length < TOP_K) reused.push(hit);
-    }
-    return reused;
-  }
   return hits.slice(0, TOP_K);
 }
 
-async function fetchArticle(path) {
+async function fetchArticle(path, question) {
   const res = await fetch(`${KIWIX_URL}${path}`);
   if (!res.ok) return '';
-  return htmlToText(await res.text()).slice(0, MAX_CHARS_PER_DOC);
+  const html = (await res.text()).replace(/<table\b[^>]*>[\s\S]*?<\/table>/gi, '');
+  const blocks = [...html.matchAll(/<(p|h[2-6])\b[^>]*>([\s\S]*?)<\/\1>/gi)];
+  const words = normalize(question);
+  const classification = /\b(?:tipos?|clases?|clasifica\w*)\b/;
+  const section = classification.test(words)
+    ? blocks.findIndex(([, tag, content]) => tag !== 'p' && classification.test(normalize(htmlToText(content))))
+    : 0;
+  let passage = '';
+  for (let i = Math.max(0, section); i < blocks.length && passage.length < MAX_CHARS_PER_DOC; i++) {
+    passage += htmlToText(blocks[i][2]) + ' ';
+  }
+  return (passage.trim() || htmlToText(html)).slice(0, MAX_CHARS_PER_DOC);
 }
 
-async function buildContext(question, previousSources) {
-  const hits = await findSources(question, previousSources);
+async function buildContext(question, topic, previousSources) {
+  let hits = [];
+  if (previousSources.length) {
+    hits = (await Promise.all(previousSources.map(articleByTitle))).filter(Boolean);
+  }
+  if (!hits.length) hits = await findSources(topic || question);
   const docs = await Promise.all(
-    hits.map(async (h) => ({ title: h.title, text: await fetchArticle(h.path) })),
+    hits.map(async (h) => ({ title: h.title, text: await fetchArticle(h.path, question) })),
   );
   return docs.filter((d) => d.text);
 }
 
-function buildMessages(question, docs, history, mode) {
+function buildMessages(question, docs, history, mode, detail) {
+  const lengthRule = detail ? DETAILED : BRIEF;
   if (mode !== 'library') {
     return [
-      { role: 'system', content: SYSTEM_PROMPT_NO_LIBRARY },
+      { role: 'system', content: SYSTEM_PROMPT_NO_LIBRARY + ' ' + lengthRule },
       ...history,
       { role: 'user', content: question },
     ];
   }
   const context = docs.map((d, i) => `[${i + 1}] ${d.title}\n${d.text}`).join('\n\n');
   return [
-    { role: 'system', content: SYSTEM_PROMPT },
+    { role: 'system', content: SYSTEM_PROMPT + ' ' + lengthRule },
     ...history,
     { role: 'user', content: `Contexto:\n${context}\n\nPregunta: ${question}` },
   ];
@@ -223,7 +248,7 @@ function parseHistory(raw) {
 const isUp = (url) => fetch(url).then((r) => r.ok, () => false);
 
 const app = express();
-app.use(express.json({ limit: '8kb' }));
+app.use(express.json({ limit: '64kb' }));
 
 app.get('/health', async (_req, res) => {
   const [kiwix, ollama] = await Promise.all([
@@ -248,11 +273,16 @@ app.post('/api/ask', async (req, res) => {
 
   const history = parseHistory(req.body?.history);
 
-  const isShortGreeting = !question.includes(' ') && question.length <= 4;
-  if (isShortGreeting || (!hasTopic(question) && previousSources.length === 0 && history.length === 0)) {
+  const followup = needsTopic(question);
+  const topic = followup
+    ? previousSources[0] || history.findLast((m) => m.role === 'user' && !needsTopic(m.content))?.content
+    : undefined;
+  const detail = DETAIL_REQUEST.test(normalize(question));
+  if (/^(hola|buenas|buenos dias|buenas tardes|buenas noches)[!. ]*$/.test(normalize(question))) {
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     return res.end(GREETING);
   }
+  if (followup && !topic && !history.length) return res.type('text/plain').send('¿Sobre qué tema te gustaría saber más?');
 
   if (!(await acquireSlot())) {
     return res.status(503).json({ error: 'Hay muchas consultas en espera, intenta de nuevo en un momento' });
@@ -265,7 +295,7 @@ app.post('/api/ask', async (req, res) => {
   try {
     let docs = [];
     try {
-      docs = await buildContext(question, previousSources);
+      docs = await buildContext(question, topic, followup ? previousSources : []);
     } catch (err) {
       console.error('Biblioteca no disponible:', err.message);
       mode = 'model';
@@ -278,14 +308,15 @@ app.post('/api/ask', async (req, res) => {
       body: JSON.stringify({
         model: MODEL,
         messages: buildMessages(
-          hasTopic(question) || !previousSources[0] ? question : `${question} (sobre ${previousSources[0]})`,
+          topic ? `${question}\nTema de referencia: ${topic}` : question,
           docs,
           history,
           mode,
+          detail,
         ),
         stream: true,
         think: false,
-        options: { temperature: 0 },
+        options: { temperature: 0, num_predict: detail ? 224 : 128 },
       }),
     });
     if (!ollamaRes.ok) throw new Error(`Ollama error: ${ollamaRes.status}`);
