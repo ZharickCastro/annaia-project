@@ -4,10 +4,12 @@ import { MATERIAS } from '../../core/datos-mock';
 import { Materia } from '../../core/modelos';
 import { MateriaCardComponent } from '../../shared/materia-card.component';
 
+
 @Component({
   selector: 'app-biblioteca',
   imports: [MateriaCardComponent],
   templateUrl: './biblioteca.component.html',
+  styleUrl: './biblioteca.component.css',
 })
 export class BibliotecaComponent {
   readonly #router = inject(Router);
