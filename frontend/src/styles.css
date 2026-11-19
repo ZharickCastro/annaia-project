@@ -46,7 +46,7 @@ a { color: inherit; text-decoration: none; }
 }
 .tarjeta-enlace:hover { border-color: var(--acento); transform: translateY(-2px); }
 .tarjeta-enlace small { color: var(--suave); }
-.rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.rejilla { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr)); gap: 16px; }
 .insignia {
   display: inline-flex; width: 36px; height: 36px; border-radius: 10px;
   align-items: center; justify-content: center; background: var(--acento-claro); color: var(--acento);
@@ -150,36 +150,30 @@ app-mensaje.propio .burbuja { background: var(--acento); color: #fff; border: no
 .campo { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--borde); }
 
 /* ---------- Listas de consultas ---------- */
-.lista { padding: 4px 0; }
-.fila-consulta {
-  display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px;
-  border: none; border-bottom: 1px solid var(--borde); background: none; text-align: left;
-}
-app-tarjeta-consulta:last-child .fila-consulta { border-bottom: none; }
-.fila-consulta:hover { background: var(--fondo); }
-.icono-fila { color: var(--acento); }
-.cuerpo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.detalle { color: var(--suave); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.tiempo { color: var(--suave); white-space: nowrap; }
-.vacio-lista { padding: 16px; margin: 0; }
+.detalle { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.vacio-lista { grid-column: 1 / -1; margin: 0; }
+app-tarjeta-consulta { min-width: 0; }
+app-tarjeta-consulta button { height: 100%; overflow-wrap: anywhere; }
+.tiempo { margin-top: auto; }
 
 /* ---------- Configuración y ayuda ---------- */
-.ajustes { padding: 0 16px; }
-.ajuste { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--borde); }
-.ajuste:last-child { border-bottom: none; }
-.ajuste small { display: block; color: var(--suave); }
+.ajuste { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.ajuste small { display: block; color: var(--suave); overflow-wrap: anywhere; }
+.ajuste .selector { flex-wrap: wrap; }
+.ajuste input[type="range"] { width: 100%; accent-color: var(--acento); }
 .interruptor { width: 44px; height: 24px; border-radius: 999px; border: none; background: var(--borde); position: relative; }
 .interruptor::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: left .15s; }
 .interruptor[aria-checked="true"] { background: var(--acento); }
 .interruptor[aria-checked="true"]::after { left: 23px; }
-.ayuda { display: flex; flex-direction: column; gap: 12px; }
+.ayuda { align-items: start; }
+.ayuda details:hover, .ayuda details:focus-within { border-color: var(--acento); }
 .ayuda summary { font-weight: 600; cursor: pointer; }
 .ayuda p { margin: 10px 0 0; color: var(--suave); }
 
 /* ---------- Panel docente ---------- */
 .indicador strong { display: block; font-size: 1.8rem; color: var(--acento); }
 .indicador small { color: var(--suave); }
-.panel { display: grid; grid-template-columns: 1fr 280px; gap: 20px; }
+.panel { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 20px; }
 .titulo-seccion { display: flex; justify-content: space-between; align-items: center; }
 .filtro { display: flex; gap: 6px; align-items: center; font-size: .85rem; color: var(--suave); }
 .temas { list-style: none; margin: 0; padding: 8px 16px; }
