@@ -21,24 +21,6 @@
 
   <div class="tarjeta ajuste">
     <div>
-      <strong>Idioma</strong>
-      <small>Elige el idioma del saludo</small>
-    </div>
-    <div class="selector">
-      @for (idioma of idiomas; track idioma) {
-        <button
-          type="button"
-          [class.activo]="configuracion.idioma() === idioma"
-          (click)="configuracion.cambiarIdioma(idioma)"
-        >
-          {{ idioma }}
-        </button>
-      }
-    </div>
-  </div>
-
-  <div class="tarjeta ajuste">
-    <div>
       <strong>Tamaño de texto</strong>
       <small>{{ configuracion.tamanoTexto() }} %</small>
     </div>
