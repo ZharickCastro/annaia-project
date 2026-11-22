@@ -24,7 +24,7 @@
         Solo sin respuesta
       </label>
     </div>
-    <div class="tarjeta lista">
+    <div class="rejilla">
       @for (consulta of lista(); track consulta.id) {
         <app-tarjeta-consulta
           [consulta]="consulta"
@@ -32,7 +32,7 @@
           (abrir)="seleccionada.set($event)"
         />
       } @empty {
-        <p class="suave vacio-lista">No hay consultas para mostrar.</p>
+        <p class="tarjeta suave vacio-lista">No hay consultas para mostrar.</p>
       }
     </div>
   </section>
