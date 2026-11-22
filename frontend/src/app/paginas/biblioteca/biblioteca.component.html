@@ -1,18 +1,29 @@
-<p class="suave">Contenido educativo disponible sin conexión: Wikipedia en español offline, servida con Kiwix.</p>
+<div class="biblioteca-contenedor">
+  <div class="biblioteca-header">
+    <h2>¡Elige una materia!</h2>
+    <p>Contenido educativo disponible sin conexión para divertirnos y aprender con Anna IA.</p>
+  </div>
 
-<input
-  class="buscador"
-  type="search"
-  placeholder="Buscar en la biblioteca…"
-  aria-label="Buscar materia"
-  [value]="busqueda()"
-  (input)="alBuscar($event)"
-/>
+  <div class="buscador-wrapper">
+    <span class="buscador-icono">🔍</span>
+    <input
+      class="buscador-input"
+      type="search"
+      placeholder="Buscar una materia en la biblioteca…"
+      aria-label="Buscar materia"
+      [value]="busqueda()"
+      (input)="alBuscar($event)"
+    />
+  </div>
 
-<div class="rejilla">
-  @for (materia of materias(); track materia.nombre) {
-    <app-materia-card [materia]="materia" (elegir)="abrir($event)" />
-  } @empty {
-    <p class="suave">No hay materias que coincidan con "{{ busqueda() }}".</p>
-  }
+  <div class="rejilla-materias">
+    @for (materia of materias(); track materia.nombre) {
+      <app-materia-card [materia]="materia" (elegir)="abrir($event)" />
+    } @empty {
+      <div class="sin-resultados">
+        <p>No hay materias que coincidan con "{{ busqueda() }}".</p>
+        <span>¡Intenta buscando otra aventura!</span>
+      </div>
+    }
+  </div>
 </div>
