@@ -7,15 +7,15 @@
     </div>
   </div>
 
-  <nav>
+  <nav aria-label="Navegación principal">
     @for (enlace of enlaces; track enlace.ruta) {
-      <a [routerLink]="enlace.ruta" routerLinkActive="activo">
+      <a [routerLink]="enlace.ruta" routerLinkActive="activo" ariaCurrentWhenActive="page">
         <app-icono [nombre]="enlace.icono" />
         <span>{{ enlace.texto }}</span>
       </a>
     }
     @if (sesion.esDocente()) {
-      <a routerLink="/docente" routerLinkActive="activo">
+      <a routerLink="/docente" routerLinkActive="activo" ariaCurrentWhenActive="page">
         <app-icono nombre="docente" />
         <span>Panel docente</span>
       </a>

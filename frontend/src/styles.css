@@ -11,7 +11,8 @@
   --ok-claro: #e3f3e4;
   --alerta: #b3261e;
   --alerta-claro: #fbe4e2;
-  --radio: 14px;
+  --radio: 20px;
+  --cenefa-biblioteca: repeating-linear-gradient(45deg, #f59e0b 0 10px, #b91c1c 10px 20px, #fef08a 20px 30px);
   --franja: repeating-linear-gradient(90deg, #e8790f 0 14px, #2e7d32 14px 22px, #b3261e 22px 30px, #2b2622 30px 34px);
 }
 
@@ -191,4 +192,86 @@ app-tarjeta-consulta button { height: 100%; overflow-wrap: anywhere; }
   .encabezado, .pagina { padding-left: 16px; padding-right: 16px; }
   .panel { grid-template-columns: 1fr; }
   app-mensaje { max-width: 100%; }
+}
+
+    .tema-matematicas { background: linear-gradient(135deg, #2563EB 0%, #1E3A8A 100%); }
+    .tema-ciencias    { background: linear-gradient(135deg, #059669 0%, #064E3B 100%); }
+    .tema-espanol     { background: linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%); }
+    .tema-wayuu       { background: linear-gradient(135deg, #EA580C 0%, #7C2D12 100%); }
+    .tema-historia    { background: linear-gradient(135deg, #D97706 0%, #78350F 100%); }
+    .tema-geografia   { background: linear-gradient(135deg, #0891B2 0%, #164E63 100%); }
+    .tema-default     { background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%); }
+
+
+/* Portadas y fichas con la cenefa de las tarjetas de materia. */
+.tarjeta { border: 3px solid white; box-shadow: 0 5px 16px #50331219; }
+.portada, .acceso, .ficha-color, .ficha-ayuda, .ficha-consulta, .chat-cabecera {
+  position: relative;
+  overflow: hidden;
+}
+.portada::before, .acceso::before, .ficha-color::before, .ficha-ayuda::before,
+.ficha-consulta::before, .chat-cabecera::before {
+  content: ""; position: absolute; inset: 0 0 auto; height: 7px; background: var(--cenefa-biblioteca);
+}
+.portada { color: white; isolation: isolate; }
+.portada-arte {
+  position: absolute; inset: 0 0 0 auto; width: 47%; height: 100%; object-fit: cover;
+  z-index: -1; mask-image: linear-gradient(to right, transparent, black 34%);
+}
+.portada > div { max-width: 56%; }
+.portada h1, .portada h2 { font-size: clamp(1.6em, 3vw, 2.5em); line-height: 1.1; overflow-wrap: anywhere; }
+.portada .suave { color: white; margin: 8px 0 0; }
+.bienvenida { align-items: flex-start; flex-direction: column; padding: clamp(24px, 4vw, 42px); gap: 18px; }
+.bienvenida > div { min-width: 0; }
+.portada .boton-principal, .ingreso-campos .boton-principal { background: #fef08a; color: #632d10; }
+.acceso { height: 100%; min-height: 154px; padding: 22px 18px 18px; color: white; }
+.acceso .insignia, .ficha-consulta .insignia { background: white; color: #78350f; }
+.acceso strong, .ficha-color strong { font-size: 1.18em; }
+.acceso small, .ficha-color small { color: white; }
+.preguntas-guia { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr)); gap: 10px; }
+.pregunta-guia {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  border: 1px solid #e8cfaa; border-radius: 14px; padding: 12px 14px; background: white; text-align: left;
+}
+.pregunta-guia::after { content: '↗'; color: #78350f; font-weight: bold; }
+.pregunta-guia:hover { background: #fff7df; border-color: #d97706; }
+.ingreso-tarjeta { padding: 0; overflow: hidden; width: min(580px, 100%); text-align: left; align-items: stretch; gap: 0; }
+.ingreso-portada { padding: 32px 24px; }
+.ingreso-campos { display: grid; gap: 10px; padding: 18px 24px 24px; }
+.ingreso-campos .selector { justify-self: start; }
+.ingreso-campos .boton-principal { border: 1px solid #f1ce66; }
+.chat { background: #fffaf2; }
+.chat-cabecera { padding: 20px 16px 12px; color: white; }
+.chat-cabecera .estado-linea { color: white; }
+.chat-cabecera .boton-secundario { color: var(--texto); }
+.vacio { text-align: left; align-items: stretch; width: min(100%, 640px); }
+.vacio h2 { color: #4c1d95; font-size: 1.75em; }
+.vacio .preguntas-guia { margin-top: 12px; }
+.campo { background: white; }
+.burbuja { background: white; overflow-wrap: anywhere; }
+app-mensaje.propio .burbuja { background: #4c1d95; }
+.ficha-color { color: white; padding: 24px 18px 18px; }
+.indicador strong { color: white; font-size: 2em; }
+.ficha-color .interruptor { background: #404040; outline: 2px solid white; }
+.ficha-color .interruptor[aria-checked="true"] { background: #277e45; }
+.ficha-ayuda, .ficha-consulta { padding-top: 22px; background: #fffbf1; }
+.ficha-consulta { align-items: flex-start; }
+.ficha-consulta .insignia { background: #fef08a; }
+.ayuda summary { color: #78350f; }
+.barra .marca { border-radius: 16px; background: #fff5d8; padding: 12px; }
+.barra nav a.activo { color: #78350f; background: #fff0ae; box-shadow: inset 3px 0 #d97706; }
+.encabezado { border-image: var(--cenefa-biblioteca) 1; }
+@media (max-width: 760px) {
+  .barra .marca { align-self: flex-start; padding: 5px 12px; }
+  .barra nav a { flex-direction: column; gap: 4px; padding: 7px 9px; flex-shrink: 0; }
+  .barra nav a span { display: block; font-size: .75em; }
+  .salir span { display: inline; }
+  .barra nav a.activo { box-shadow: inset 0 -3px #d97706; }
+  .portada > div { max-width: 68%; }
+  .portada-arte { width: 34%; }
+  .chat { height: min(74dvh, 800px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tarjeta-enlace { transition: none; }
+  .tarjeta-enlace:hover { transform: none; }
 }

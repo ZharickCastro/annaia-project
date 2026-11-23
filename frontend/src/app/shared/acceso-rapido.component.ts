@@ -7,7 +7,7 @@ import { IconoComponent } from './icono.component';
   selector: 'app-acceso-rapido',
   imports: [RouterLink, IconoComponent],
   template: `
-    <a class="tarjeta tarjeta-enlace" [routerLink]="ruta()">
+    <a class="tarjeta tarjeta-enlace acceso" [class.tema-espanol]="ruta() === '/anna'" [class.tema-ciencias]="ruta() === '/biblioteca'" [class.tema-matematicas]="ruta() === '/consultas'" [routerLink]="ruta()">
       <span class="insignia"><app-icono [nombre]="icono()" /></span>
       <strong>{{ titulo() }}</strong>
       <small>{{ descripcion() }}</small>

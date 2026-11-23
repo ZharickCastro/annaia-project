@@ -66,15 +66,7 @@ import { Materia } from '../core/modelos';
       right: 0;
       height: 10px;
       z-index: 3;
-      background: repeating-linear-gradient(
-        45deg,
-        #F59E0B,
-        #F59E0B 10px,
-        #B91C1C 10px,
-        #B91C1C 20px,
-        #FEF08A 20px,
-        #FEF08A 30px
-      );
+      background: var(--cenefa-biblioteca);
     }
 
     /* Ilustración grande a la derecha integrada suavemente con el fondo */
@@ -167,13 +159,6 @@ import { Materia } from '../core/modelos';
       box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
     }
 
-    .tema-matematicas { background: linear-gradient(135deg, #2563EB 0%, #1E3A8A 100%); }
-    .tema-ciencias    { background: linear-gradient(135deg, #059669 0%, #064E3B 100%); }
-    .tema-espanol     { background: linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%); }
-    .tema-wayuu       { background: linear-gradient(135deg, #EA580C 0%, #7C2D12 100%); }
-    .tema-historia    { background: linear-gradient(135deg, #D97706 0%, #78350F 100%); }
-    .tema-geografia   { background: linear-gradient(135deg, #0891B2 0%, #164E63 100%); }
-    .tema-default     { background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%); }
   `]
 })
 export class MateriaCardComponent {

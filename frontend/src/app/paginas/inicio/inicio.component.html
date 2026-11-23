@@ -1,7 +1,7 @@
-<section class="tarjeta bienvenida">
-  <img src="/img/anna.jpeg" alt="Anna IA" class="avatar avatar-lg" />
+<section class="tarjeta portada tema-wayuu bienvenida">
+  <img class="portada-arte" src="/img/materias/wayuu.jpg" alt="" />
   <div>
-    <h2>{{ configuracion.saludo() }} Bienvenido de nuevo, {{ sesion.usuario()?.nombre }}</h2>
+    <h2>{{ configuracion.saludo() }} {{ sesion.usuario()?.nombre }}</h2>
     <p class="suave">
       Anna IA te acompaña a aprender matemáticas, ciencias, español, historia y cultura wayúu, sin necesitar conexión a
       internet.
@@ -23,8 +23,8 @@
 </div>
 
 <h3>Preguntas frecuentes para empezar</h3>
-<div class="chips">
+<div class="preguntas-guia">
   @for (pregunta of preguntas; track pregunta) {
-    <a class="chip chip-boton" routerLink="/anna" [queryParams]="{ q: pregunta }">{{ pregunta }}</a>
+    <a class="pregunta-guia" routerLink="/anna" [queryParams]="{ q: pregunta }">{{ pregunta }}</a>
   }
 </div>
