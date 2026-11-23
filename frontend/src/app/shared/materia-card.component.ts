@@ -64,23 +64,17 @@ import { Materia } from '../core/modelos';
       top: 0;
       left: 0;
       right: 0;
-      height: 10px;
+      height: 16px;
       z-index: 3;
-      background: repeating-linear-gradient(
-        45deg,
-        #F59E0B,
-        #F59E0B 10px,
-        #B91C1C 10px,
-        #B91C1C 20px,
-        #FEF08A 20px,
-        #FEF08A 30px
-      );
+      /* Tejido wayuu (styles.css → --tejido-wayuu). */
+      background: var(--tejido-wayuu) repeat-x left center / auto 100%;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
     }
 
     /* Ilustración grande a la derecha integrada suavemente con el fondo */
     .ilustracion-wrapper {
       position: absolute;
-      top: 10px;
+      top: 16px;
       right: 0;
       bottom: 0;
       width: 56%;
@@ -158,8 +152,8 @@ import { Materia } from '../core/modelos';
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
-      background-color: #FEF08A;
-      color: #78350F;
+      background-color: #FFFFFF;
+      color: var(--ok);
       font-size: 0.74rem;
       font-weight: 800;
       padding: 0.35rem 0.75rem;
@@ -167,13 +161,14 @@ import { Materia } from '../core/modelos';
       box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
     }
 
-    .tema-matematicas { background: linear-gradient(135deg, #2563EB 0%, #1E3A8A 100%); }
-    .tema-ciencias    { background: linear-gradient(135deg, #059669 0%, #064E3B 100%); }
-    .tema-espanol     { background: linear-gradient(135deg, #7C3AED 0%, #4C1D95 100%); }
-    .tema-wayuu       { background: linear-gradient(135deg, #EA580C 0%, #7C2D12 100%); }
-    .tema-historia    { background: linear-gradient(135deg, #D97706 0%, #78350F 100%); }
-    .tema-geografia   { background: linear-gradient(135deg, #0891B2 0%, #164E63 100%); }
-    .tema-default     { background: linear-gradient(135deg, #F59E0B 0%, #B45309 100%); }
+    /* Colores vivos inspirados en los tejidos wayuu: naranja, verde, fucsia, turquesa, dorado y azul. */
+    .tema-matematicas { background: linear-gradient(135deg, #ff8a1f 0%, #e4570c 100%); }
+    .tema-ciencias    { background: linear-gradient(135deg, #22b35e 0%, #0f7a43 100%); }
+    .tema-espanol     { background: linear-gradient(135deg, #e91e7a 0%, #9c1457 100%); }
+    .tema-wayuu       { background: linear-gradient(135deg, #17b3a8 0%, #0b6e6a 100%); }
+    .tema-historia    { background: linear-gradient(135deg, #f5a524 0%, #c2620a 100%); }
+    .tema-geografia   { background: linear-gradient(135deg, #2f8ae8 0%, #1553a8 100%); }
+    .tema-default     { background: linear-gradient(135deg, #ff8a1f 0%, #e4570c 100%); }
   `]
 })
 export class MateriaCardComponent {
