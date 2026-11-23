@@ -1,6 +1,6 @@
 <section class="tarjeta chat">
   <div class="chat-cabecera">
-    <img src="/img/anna.jpeg" alt="Anna IA" class="avatar avatar-sm" />
+    <img src="/img/anna-avatar.webp" alt="Anna IA" class="avatar avatar-sm avatar-anna" />
     <div>
       <strong>Anna IA</strong>
       <small class="estado-linea">En línea · Offline</small>
@@ -18,7 +18,10 @@
   <div #registro class="registro">
     @if (consultas.mensajes().length === 0) {
       <div class="vacio">
-        <img src="/img/anna.jpeg" alt="Anna IA" class="avatar avatar-lg" />
+        <div class="avatar-sol">
+          <span class="avatar-sol-marco"><img src="/img/anna-avatar.webp" alt="Anna IA" /></span>
+          <span class="avatar-sol-estado" aria-label="En línea"></span>
+        </div>
         <h2>¡Hola!</h2>
         <p><strong>Soy Anna IA, tu asistente educativo.</strong></p>
         <p class="suave">
