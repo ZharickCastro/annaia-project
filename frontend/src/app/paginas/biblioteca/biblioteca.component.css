@@ -12,12 +12,12 @@
 .biblioteca-header h2 {
   font-size: 2rem;
   font-weight: 800;
-  color: #D97706;
+  color: var(--acento);
   margin: 0 0 0.4rem 0;
 }
 
 .biblioteca-header p {
-  color: #4B5563;
+  color: var(--suave);
   font-size: 0.95rem;
   margin: 0;
 }
@@ -40,18 +40,18 @@
   width: 100%;
   padding: 0.75rem 1rem 0.75rem 2.7rem;
   border-radius: 14px;
-  border: 2px solid #FCD34D;
+  border: 2px solid var(--borde);
   font-size: 0.95rem;
-  background-color: #FFFFFF;
-  color: #1F2937;
+  background-color: var(--superficie);
+  color: var(--texto);
   outline: none;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .buscador-input:focus {
-  border-color: #D97706;
-  box-shadow: 0 0 0 3px rgba(252, 211, 77, 0.4);
+  border-color: var(--acento);
+  box-shadow: 0 0 0 3px var(--acento-claro);
 }
 
 /* 2 columnas fijas en pantalla normal, sin que 1 solo resultado se estire gigante */
@@ -73,8 +73,8 @@
   grid-column: 1 / -1;
   text-align: center;
   padding: 2.5rem;
-  background-color: #FFF7ED;
-  border: 2px dashed #FDBA74;
+  background-color: var(--acento-claro);
+  border: 2px dashed var(--acento);
   border-radius: 20px;
-  color: #6B7280;
+  color: var(--suave);
 }
