@@ -57,7 +57,7 @@ export function titleCandidates(question) {
     for (let i = 0; i + len <= list.length; i++) {
       const run = list.slice(i, i + len);
       if (run.some((w) => isNoise(normalize(w)))) continue;
-      titles.push(run.map((w) => w[0].toUpperCase() + w.slice(1)).join(' '));
+      titles.push(run.join(' ').replace(/^./u, c => c.toUpperCase()));
     }
   }
   return [...new Set(titles)];

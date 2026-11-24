@@ -37,10 +37,12 @@ const MAX_CHARS_PER_DOC = Number(process.env.MAX_CHARS_PER_DOC ?? 900);
 const SYSTEM_PROMPT =
   'Eres Anna IA, un asistente educativo para estudiantes de comunidades rurales. ' +
   'Responde en español, con frases sencillas y en texto plano, sin viñetas, negritas ni títulos. ' +
-  'Usa únicamente los datos que aparecen en el contexto: no agregues cifras, fechas, nombres ni ' +
-  'datos que no estén escritos ahí, aunque los conozcas. ' +
+  'Basa los hechos en los artículos. Puedes relacionar hechos de distintos artículos y explicar qué se deduce de ellos, aunque ninguno conteste la pregunta literalmente. ' +
+  'Si la evidencia es parcial, explica lo que sí se sabe e identifica qué falta. No inventes cifras, fechas ni ventajas. ' +
   'Si la pregunta es general (por ejemplo, "¿qué más me puedes decir?"), resume los datos más importantes del contexto. ' +
-  'Si ya diste esa información antes en la conversación, no la repitas: da datos nuevos del contexto. ' +
+  'Al ampliar una respuesta, incorpora solo detalles que sirvan para resolver la duda actual. ' +
+  'Si preguntan por una expresión de tu respuesta anterior, aclara a qué te referías con un ejemplo concreto respaldado por las fuentes. ' +
+  'Usa el historial para interpretar la pregunta y los artículos para comprobar la respuesta. ' +
   'Si un título de obra aparece en inglés, tradúcelo al español. ' +
   'Solo si el contexto no tiene nada relacionado con la pregunta, dilo con estas palabras: "No encuentro esa información en la biblioteca."';
 
@@ -50,6 +52,11 @@ const SYSTEM_PROMPT_NO_LIBRARY =
 
 const BRIEF = 'Contesta directamente en 2 o 3 frases cortas, hasta 50 palabras. Termina la última frase.';
 const DETAILED = 'Amplía la explicación con información nueva en un párrafo de hasta 90 palabras. Termina la última frase.';
+const COMPARE = 'Nombra las dos opciones. Comprueba primero si son alternativas o si una produce, contiene o utiliza la otra. Explica esa relación sin confundir la dirección de la transformación. ' +
+  'Compara una propiedad por vez y conserva los matices de los artículos. No deduzcas rapidez, superioridad ni que algo ocurre siempre a partir de una definición. ' +
+  'Explica directamente la relación con un ejemplo cotidiano en lugar de recitar definiciones. Solo si pide elegir, usa su objetivo como criterio. Si falta, da una orientación condicional o pregunta para qué lo necesita. Omite estadísticas, pronósticos y comentarios sobre los artículos salvo que los pidan. Usa hasta tres frases.';
+
+const COMPARISON_REQUEST = /\b(?:compar(?:a|ar|e|en)(?:me|los?|las?)?|comparacion entre|diferencias? entre|diferencian|versus|vs|(?:es|son|sera|funciona|resulta) (?:mejor|peor)|(?:cual|que) (?:conviene|prefieres))\b/;
 
 const NO_LIBRARY_NOTE =
   'La biblioteca no está disponible. Esta respuesta viene del modelo y no está verificada.\n\n';
@@ -149,7 +156,7 @@ async function directHits(question) {
   const found = [];
   for (const title of titleCandidates(question)) {
     if (found.length >= TOP_K) break;
-    if (found.some((f) => f.title.includes(title))) continue;
+    if (found.some((f) => (' ' + normalize(f.title) + ' ').includes(' ' + normalize(title) + ' '))) continue;
     const hit = await articleByTitle(title);
     if (hit && !found.some((f) => f.path === hit.path)) found.push(hit);
   }
@@ -195,22 +202,112 @@ async function findSources(question, previousSources, kind) {
 }
 
 // `part` 0 es el comienzo del artículo; en cada "dime más" se avanza al trozo siguiente.
-async function fetchArticle(path, part = 0) {
-  const res = await fetch(`${KIWIX_URL}${path}`);
-  if (!res.ok) return '';
-  return chunkOf(htmlToText(await res.text()), part, MAX_CHARS_PER_DOC);
+function refersToAnswer(question, history) {
+  const answer = history.findLast(m => m.role === 'assistant');
+  if (!answer) return false;
+  const words = keywordsOf(question);
+  if (!words.length) return false;
+  const prior = new Set(keywordsOf(answer.content));
+  return words.every(word => prior.has(word));
 }
 
-async function buildContext(question, previousSources, kind, part = 0) {
-  const hits = await findSources(question, previousSources, kind);
+async function relatedTitles(question, history, comparison = false) {
+  const instruction = comparison
+    ? 'Identifica los dos conceptos que el estudiante quiere comparar. Devuelve en titulos sus nombres completos como títulos de Wikipedia en español, uno por concepto. Resuelve pronombres y palabras omitidas usando las preguntas recientes del estudiante. La última pregunta explícita tiene prioridad. Si falta una opción y no se puede identificar en el diálogo, devuelve una lista vacía. No devuelvas nombres de métodos de comparación.'
+    : 'Selecciona uno o dos títulos breves de artículos de Wikipedia en español para contestar la última pregunta. Resuelve las referencias al turno anterior. Si pide ejemplos, elige conceptos concretos que ilustren lo dicho y se puedan verificar.';
+  const response = await fetch(`${OLLAMA_URL}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(comparison ? 60000 : 20000),
+    body: JSON.stringify({
+      model: MODEL, stream: false, think: false,
+      format: { type: 'object', properties: { titulos: { type: 'array', items: { type: 'string' } } }, required: ['titulos'] },
+      messages: [
+        { role: 'system', content: instruction },
+        ...history, { role: 'user', content: question },
+      ],
+      options: { temperature: 0, num_predict: 80 },
+    }),
+  });
+  if (!response.ok) throw new Error('No se pudo interpretar la consulta');
+  const data = await response.json();
+  const titles = JSON.parse(data.message.content).titulos;
+  return Array.isArray(titles) ? titles.filter(t => typeof t === 'string' && t.trim() && t.length <= 90).slice(0, 2) : [];
+}
+
+async function fetchArticle(path, question, relatedWords = [], part = 0) {
+  const res = await fetch(`${KIWIX_URL}${path}`);
+  if (!res.ok) return '';
+  const html = (await res.text()).replace(/<table\b[^>]*>[\s\S]*?<\/table>/gi, '');
+  const blocks = [...html.matchAll(/<(p|h[2-6])\b[^>]*>([\s\S]*?)<\/\1>/gi)];
+  const words = normalize(question);
+  const classification = /\b(?:tipos?|clases?|clasifica\w*)\b/;
+  const section = classification.test(words)
+    ? blocks.findIndex(([, tag, content]) => tag !== 'p' && classification.test(normalize(htmlToText(content))))
+    : 0;
+  if (part > 0 && section <= 0) return chunkOf(blocks.map(block => htmlToText(block[2])).join(' ') || htmlToText(html), part, MAX_CHARS_PER_DOC);
+  let passage = '';
+  for (let i = Math.max(0, section); i < blocks.length && passage.length < MAX_CHARS_PER_DOC; i++) {
+    passage += htmlToText(blocks[i][2]) + ' ';
+  }
+  const lead = (passage.trim() || htmlToText(html)).slice(0, MAX_CHARS_PER_DOC);
+  // Una definición puede estar al inicio y la relación con la otra opción mucho más abajo.
+  const prefix = Math.floor(MAX_CHARS_PER_DOC * 0.6);
+  if (relatedWords.length) {
+    for (const [, tag, content] of blocks) {
+      if (tag !== 'p') continue;
+      const paragraph = htmlToText(content);
+      for (const sentence of paragraph.split(/(?<=[.!?])\s+/u)) {
+        if (lead.slice(0, prefix).includes(sentence)) continue;
+        const terms = keywordsOf(sentence);
+        if (relatedWords.some(stem => terms.some(term => term.startsWith(stem)))) {
+          return lead.slice(0, prefix) + '\n' + sentence.slice(0, MAX_CHARS_PER_DOC - prefix - 1);
+        }
+      }
+    }
+  }
+  return lead;
+}
+
+async function comparisonSource(title) {
+  const exact = await articleByTitle(title);
+  if (exact) return exact;
+  const words = keywordsOf(title);
+  const results = await searchKiwix(title, words);
+  return results.find(hit => normalize(hit.title) === normalize(title))
+    ?? results.find(hit => words.length > 0 && hit.hits === words.length);
+}
+
+async function buildContext(question, previousSources, kind, part, history, referenced, subjects) {
+  let hits = [];
+  if (subjects?.length) {
+    hits = (await Promise.all(subjects.map(comparisonSource))).filter(Boolean);
+  } else if (referenced && previousSources.length) {
+    hits = (await Promise.all(previousSources.map(articleByTitle))).filter(Boolean);
+  }
+  if (referenced) {
+    // Los títulos propuestos solo sirven para buscar: el modelo leerá artículos reales.
+    const titles = await relatedTitles(question, history).catch(() => []);
+    const extra = await Promise.all(titles.map(articleByTitle));
+    hits = [...extra.filter(Boolean), ...hits];
+  }
+  if (!hits.length && !subjects?.length) {
+    const focus = question.match(/\b(?:sobre|acerca de)\s+(.+)/iu)?.[1];
+    hits = await findSources(focus || question, previousSources, kind);
+  }
+  hits = [...new Map(hits.map(hit => [hit.path, hit])).values()].slice(0, TOP_K);
   const docs = await Promise.all(
-    hits.map(async (h) => ({ title: h.title, text: await fetchArticle(h.path, part) })),
+    hits.map(async (h) => {
+      const own = keywordsOf(h.title);
+      const related = (subjects ?? []).flatMap(keywordsOf)
+        .filter(word => word.length >= 4 && !own.includes(word)).map(word => word.slice(0, 6));
+      return { title: h.title, text: await fetchArticle(h.path, question, related, part) };
+    }),
   );
   return docs.filter((d) => d.text);
 }
 
-function buildMessages(question, docs, history, mode, detail) {
-  const lengthRule = detail ? DETAILED : BRIEF;
+function buildMessages(question, docs, history, mode, lengthRule) {
   if (mode !== 'library') {
     return [
       { role: 'system', content: SYSTEM_PROMPT_NO_LIBRARY + ' ' + lengthRule },
@@ -224,6 +321,67 @@ function buildMessages(question, docs, history, mode, detail) {
     ...history,
     { role: 'user', content: `Contexto:\n${context}\n\nPregunta: ${question}` },
   ];
+}
+
+async function comparisonEvidence(docs, question) {
+  const candidates = docs.map(doc => doc.text.match(/[^.!?]+[.!?](?=\s|$)/gu) ?? []);
+  if (candidates.length < 2 || candidates.some(sentences => !sentences.length)) return docs;
+  const options = candidates.map((sentences, i) =>
+    docs[i].title + '\n' + sentences.map((s, n) => `${n + 1}. ${s.trim()}`).join('\n'),
+  );
+  const response = await fetch(`${OLLAMA_URL}/api/chat`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.timeout(20000),
+    body: JSON.stringify({
+      model: MODEL, think: false, stream: false,
+      format: { type: 'object', properties: { frases: { type: 'array', items: { type: 'integer' } } }, required: ['frases'] },
+      messages: [
+        { role: 'system', content: 'Para cada artículo elige el número de la oración que mejor explica la relación o diferencia solicitada. Prefiere mecanismos o definiciones a estadísticas y predicciones. Devuelve un número por artículo, en el mismo orden.' },
+        { role: 'user', content: question + '\n\n' + options.join('\n\n') },
+      ],
+      options: { temperature: 0, num_ctx: NUM_CTX, num_predict: 48 },
+    }),
+  });
+  if (!response.ok) return docs;
+  const picks = JSON.parse((await response.json()).message.content).frases;
+  return docs.map((doc, i) => {
+    const sentences = candidates[i];
+    const n = picks?.[i];
+    if (!Number.isInteger(n) || !sentences[n - 1]) return doc;
+    return { ...doc, text: [...new Set([sentences[0], sentences[n - 1]])].join(' ') };
+  });
+}
+
+async function* generateAnswer(messages, comparison, detail) {
+  const response = await fetch(`${OLLAMA_URL}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: MODEL, messages, stream: true, think: false,
+      options: { temperature: 0, num_ctx: NUM_CTX, num_predict: detail || comparison ? 224 : 128 } }),
+  });
+  if (!response.ok) {
+    throw new Error(`Ollama error: ${response.status}`);
+  }
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let emitted = false;
+  for await (const chunk of response.body) {
+    buffer += decoder.decode(chunk, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      const part = JSON.parse(line);
+      if (part.error) throw new Error(part.error);
+      if (part.message?.content) { emitted = true; yield part.message.content; }
+    }
+  }
+  const tail = (buffer + decoder.decode()).trim();
+  if (tail) {
+    const part = JSON.parse(tail);
+    if (part.error) throw new Error(part.error);
+    if (part.message?.content) { emitted = true; yield part.message.content; }
+  }
+  if (!emitted) throw new Error('Ollama terminó sin producir una respuesta');
 }
 
 const isUp = (url) => fetch(url).then((r) => r.ok, () => false);
@@ -253,11 +411,14 @@ app.post('/api/ask', async (req, res) => {
     ? req.body.previousSources.filter((s) => typeof s === 'string').slice(0, TOP_K)
     : [];
 
+  const comparison = COMPARISON_REQUEST.test(normalize(question));
+  const referenced = /^[¿¡\s]*(?:y\s+)?(?:cuales?|cual|que|por que|como)\b/.test(normalize(question))
+    && refersToAnswer(question, history);
   const kind = classify(question, previousSources);
   // Respuesta breve por defecto; más larga si piden detalle o es un "dime más".
   const detail = kind === 'seguimiento' || DETAIL_REQUEST.test(normalize(question));
 
-  if (kind === 'saludo' || (kind === 'charla' && history.length === 0)) {
+  if (kind === 'saludo' || (kind === 'charla' && !comparison && history.length === 0)) {
     const reply = kind === 'saludo' ? socialReply(question, history.length > 0) : GREETING;
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('X-Sources', encodeURIComponent(JSON.stringify(previousSources)));
@@ -271,13 +432,23 @@ app.post('/api/ask', async (req, res) => {
   const started = Date.now();
   let answer = '';
   let sources = [];
-  let mode = kind === 'charla' ? 'chat' : 'library';
+  let mode = !comparison && kind === 'charla' ? 'chat' : 'library';
   try {
     let docs = [];
+    // Si el planificador no responde, pedir los conceptos evita buscar «compararlos»
+    // como si fuera un tema académico. Reutilizar fuentes solo para referencias explícitas.
+    const subjects = comparison ? await relatedTitles(question, history, true).catch(() =>
+      /\b(?:compararlos|compararlas|comparalos|comparalas|ambos|ambas)\b/.test(normalize(question))
+        ? previousSources.slice(0, 2) : [],
+    ) : null;
+    if (subjects && subjects.length < 2) {
+      answer = subjects.length ? `¿Con qué te gustaría comparar ${subjects[0]}?` : '¿Qué dos opciones quieres comparar y para qué las usarías?';
+      return res.type('text/plain').send(answer);
+    }
     if (mode === 'library') {
       try {
         const part = kind === 'seguimiento' ? followUpDepth(history, previousSources) + 1 : 0;
-        docs = await buildContext(question, previousSources, kind, part);
+        docs = await buildContext(question, previousSources, kind, comparison ? 0 : part, history, referenced && !comparison, subjects);
       } catch (err) {
         console.error('Biblioteca no disponible:', err.message);
         mode = 'model';
@@ -286,39 +457,18 @@ app.post('/api/ask', async (req, res) => {
     if (mode === 'library' && docs.length === 0 && kind !== 'nueva') mode = 'chat';
     sources = docs.map((d) => d.title);
     console.log(`[ask] tipo=${kind} modo=${mode} fuentes=${JSON.stringify(sources)}`);
-    const ollamaRes = await fetch(`${OLLAMA_URL}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL,
-        messages: buildMessages(questionForModel(question, kind, sources), docs, history, mode, detail),
-        stream: true,
-        think: false,
-        options: { temperature: 0, num_ctx: NUM_CTX, num_predict: detail ? 224 : 128 },
-      }),
-    });
-    if (!ollamaRes.ok) throw new Error(`Ollama error: ${ollamaRes.status}`);
+    let contextualQuestion = questionForModel(question, kind, sources);
+    if (subjects?.length) contextualQuestion += '\nConceptos de la comparación: ' + subjects.join(' y ');
+    if (comparison && docs.length > 1) docs = await comparisonEvidence(docs, contextualQuestion).catch(() => docs);
+    const style = comparison ? COMPARE : detail ? DETAILED : BRIEF;
+    const messages = buildMessages(contextualQuestion, docs, history, mode, style);
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
     res.setHeader('X-Sources', encodeURIComponent(JSON.stringify(sources)));
-    if (mode === 'model') {
-      answer += NO_LIBRARY_NOTE;
-      res.write(NO_LIBRARY_NOTE);
-    }
-    const decoder = new TextDecoder();
-    let buffer = '';
-    for await (const chunk of ollamaRes.body) {
-      buffer += decoder.decode(chunk, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        const part = JSON.parse(line);
-        if (part.message?.content) {
-          answer += part.message.content;
-          res.write(part.message.content);
-        }
-      }
+    for await (const text of generateAnswer(messages, comparison, detail)) {
+      if (!answer && mode === 'model') { answer = NO_LIBRARY_NOTE; res.write(NO_LIBRARY_NOTE); }
+      answer += text;
+      res.write(text);
     }
     res.end();
   } catch (err) {
