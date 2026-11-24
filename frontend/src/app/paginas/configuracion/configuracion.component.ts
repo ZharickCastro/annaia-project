@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { ConfiguracionService, Idioma } from '../../core/configuracion.service';
+import { ConfiguracionService } from '../../core/configuracion.service';
 
 type EstadoServidor = 'revisando' | 'activo' | 'sin-conexion';
 
@@ -9,7 +9,6 @@ type EstadoServidor = 'revisando' | 'activo' | 'sin-conexion';
 })
 export class ConfiguracionComponent implements OnInit {
   protected readonly configuracion = inject(ConfiguracionService);
-  protected readonly idiomas: Idioma[] = ['Español', 'Wayuunaiki'];
   protected readonly servidor = location.host;
   protected readonly estado = signal<EstadoServidor>('revisando');
 
