@@ -5,6 +5,7 @@ import { SesionService } from './sesion.service';
 
 const SIN_INFORMACION = 'No encuentro esa información en la biblioteca.';
 const MAX_HISTORIAL = 6;
+const MAX_CARACTERES_POR_MENSAJE = 1000;
 
 export interface Tema {
   nombre: string;
@@ -66,12 +67,11 @@ export class ConsultasService {
     if (!pregunta || this.#cargando()) return;
 
     const anteriores = this.#mensajes();
-    const fuentesPrevias =
-      [...anteriores].reverse().find((m) => m.rol === 'assistant' && m.fuentes?.length)?.fuentes ?? [];
+    const fuentesPrevias = anteriores.at(-1)?.fuentes ?? [];
     const conversacion = anteriores
       .filter((m) => m.texto.trim())
       .slice(-MAX_HISTORIAL)
-      .map((m) => ({ role: m.rol, content: m.texto }));
+      .map((m) => ({ role: m.rol, content: m.texto.slice(0, MAX_CARACTERES_POR_MENSAJE) }));
 
     this.#mensajes.update((m) => [...m, { rol: 'user', texto: pregunta }, { rol: 'assistant', texto: '' }]);
     this.#cargando.set(true);
