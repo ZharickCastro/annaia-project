@@ -195,16 +195,21 @@ export function questionForModel(question, kind, previousSources = []) {
 // - 'cronologia'    : una línea de tiempo con fechas en orden.
 // - 'actividad'     : cómo hacer una tarea paso a paso ("¿cómo hago una maqueta del sistema solar?").
 // - 'recomendacion' : consejos o sugerencias ("recomiéndame cómo estudiar para un examen").
+// - 'ejercicio'     : resolver una operación paso a paso ("¿cómo resuelvo 3/4 + 2/5?").
 // - 'escritura'     : escribir un texto creativo ("escríbeme un cuento sobre un niño wayuu").
 const LIST_REQUEST = /\b(?:top|ranking|listado|lista de|enumer\w*|medallero|clasificacion)\b|\b(?:\d{1,2}|tres|cuatro|cinco|seis|siete|ocho|nueve|diez) (?:\w+ ){0,2}(?:mas|mejores|mayores|menores|principales|primer[oa]s)\b|\b(?:los|las) (?:\d{1,2}|tres|cuatro|cinco|seis|siete|ocho|nueve|diez) \w+|\bcuales son (?:los|las) \w+ (?:mas|mayores|principales)\b/;
 const ACTIVITY_REQUEST = /\b(?:como (?:hago|hacer|se hace|puedo hacer|elaboro|elaborar|preparo|preparar|construyo|construir|armo|armar|realizo|realizar|resuelvo|resolver|presento|presentar|organizo|organizar)|pasos? (?:para|de|a seguir)|paso a paso|instrucciones|ayudame (?:a|con)|tarea|actividad|maqueta|cartelera|experimento|manualidad|exponer|exposicion)\b/;
 const RECOMMEND_REQUEST = /\b(?:recomien\w*|recomendaci\w*|consejos?|sugier\w*|sugerencias?|tips?|aconseja\w*)\b/;
 const WRITING_REQUEST = /\b(?:escrib\w*|redact\w*|inventa\w*|crea|creame|componer|compon\w*) (?:\w+ ){0,2}(?:cuentos?|poemas?|historias?|cartas?|cancion|canciones|fabulas?|relatos?|dialogos?|adivinanzas?|coplas?|versos?)\b/;
+// Una operación escrita ("3/4 + 2/5", "12 x 7") o un pedido de cálculo.
+// El guion entre dos años ("1810-1819") no es una resta: solo cuenta con espacios o números cortos.
+const EXERCISE_REQUEST = /\d{1,3}\s*[+*x×÷/=^]\s*\d|\d{1,3}\s+-\s+\d|\b(?:calcula\w*|cuanto (?:es|da)|ecuacion\w*|despeja\w*|resuelve\w*)\b/;
 const TIMELINE_REQUEST = /\b(?:linea de tiempo|cronologia|orden cronologico)\b/;
 
 export function intentOf(question) {
   const q = normalize(question).replace(/[¿?¡!.,;:]/g, ' ').replace(/\s+/g, ' ');
   if (WRITING_REQUEST.test(q)) return 'escritura';
+  if (EXERCISE_REQUEST.test(q)) return 'ejercicio';
   if (TIMELINE_REQUEST.test(q)) return 'cronologia';
   if (/\b(?:top|ranking|medallero)\b/.test(q)) return 'lista';
   if (RECOMMEND_REQUEST.test(q)) return 'recomendacion';
@@ -262,4 +267,35 @@ export function comparisonPair(question) {
   if (!m) return [];
   const pair = [capitalize(m[1]), capitalize(m[2])];
   return pair.every((p) => p && p.split(/\s+/).length <= 5) ? pair : [];
+}
+
+const LIST_PREFIX = /^(?:Anexo:|Lista de)\s*/i;
+
+/**
+ * El mejor anexo o lista para un top: el que comparte más raíces con la pregunta y menos nombres
+ * propios o años que la pregunta no menciona ("Medallero histórico de los Juegos Olímpicos" antes que
+ * "Medallistas olímpicos de Venezuela" o "Medallero de Río de Janeiro 2016").
+ */
+export function bestListTitle(titles, keywords, question) {
+  const stems = keywords.map((k) => k.slice(0, 5));
+  const needed = Math.min(2, stems.length);
+  const q = normalize(question);
+  const questionWords = new Set(q.split(/[^a-z0-9ñ]+/));
+  // Solo cuentan palabras con contenido: un 'de' no hace conocido al nombre que lo sigue.
+  const known = (w) => !!w && !isNoise(normalize(w)) && (stems.some((s) => normalize(w).startsWith(s)) || questionWords.has(normalize(w)));
+  const scored = titles
+    .map((title, rank) => ({ title, rank }))
+    .filter(({ title }) => LIST_PREFIX.test(title))
+    .map((item) => {
+      const words = item.title.replace(LIST_PREFIX, '').split(/\s+/);
+      const matches = stems.filter((s) => normalize(item.title).includes(s)).length;
+      let penalty = words.filter((w) => /^\d{4}$/.test(w) && !q.includes(w)).length;
+      words.forEach((w, i) => {
+        if (i > 0 && /^\p{Lu}/u.test(w) && !known(w) && !known(words[i - 1]) && !known(words[i + 1])) penalty++;
+      });
+      return { ...item, matches, penalty };
+    })
+    .filter((item) => item.matches >= needed)
+    .sort((a, b) => b.matches - a.matches || a.penalty - b.penalty || a.rank - b.rank);
+  return scored[0]?.title ?? null;
 }

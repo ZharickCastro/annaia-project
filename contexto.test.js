@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chunkOf, classify, comparisonPair, followUpDepth, intentOf, keywordsOf, listSize, questionForModel, tableText, titleCandidates, trimHistory } from './contexto.js';
+import { bestListTitle, chunkOf, classify, comparisonPair, followUpDepth, intentOf, keywordsOf, listSize, questionForModel, tableText, titleCandidates, trimHistory } from './contexto.js';
 
 const VOLCAN = ['Volcán'];
 
@@ -143,7 +143,9 @@ test('preguntas complejas: el tipo de respuesta', () => {
   assert.equal(intentOf('Ayúdame a escribir un cuento corto sobre un niño wayuu que pastorea chivos'), 'escritura');
   assert.equal(intentOf('hazme una línea de tiempo de eso'), 'cronologia');
   assert.equal(intentOf('Si mañana tengo que exponer sobre el ciclo del agua, ¿qué materiales uso?'), 'actividad');
-  assert.equal(intentOf('¿Cómo resuelvo 3/4 + 2/5? Explícamelo paso a paso'), 'actividad');
+  assert.equal(intentOf('¿Cómo resuelvo 3/4 + 2/5? Explícamelo paso a paso'), 'ejercicio');
+  assert.equal(intentOf('resuelve la ecuación 2x + 3 = 7'), 'ejercicio');
+  assert.equal(intentOf('¿Qué pasó entre 1810-1819?'), null);
 });
 
 test('una pregunta corta sin nombre propio sigue el tema anterior', () => {
@@ -159,4 +161,18 @@ test('lee las dos opciones de una comparación', () => {
   assert.deepEqual(comparisonPair('compara el sol con la luna'), ['Sol', 'Luna']);
   assert.deepEqual(comparisonPair('energía solar vs energía eólica'), ['Energía solar', 'Energía eólica']);
   assert.deepEqual(comparisonPair('compáralos'), []);
+});
+
+test('para un top elige el anexo general y no el de un país o un año', () => {
+  // Títulos reales que devuelve Kiwix al buscar "países medallas olímpicas".
+  const titulos = ['Medalla olímpica', 'Anexo:Medallistas olímpicos de Venezuela',
+    'Anexo:Medallero de los Juegos Olímpicos de Río de Janeiro 2016', 'Argentina en los Juegos Olímpicos de Londres 2012',
+    'Anexo:Medallero histórico de los Juegos Olímpicos de verano'];
+  assert.equal(bestListTitle(titulos, ['paises', 'medallas', 'olimpicas'], 'Dame el top 5 de los países con más medallas olímpicas'),
+    'Anexo:Medallero histórico de los Juegos Olímpicos de verano');
+  assert.equal(bestListTitle(titulos, ['medallas', 'olimpicas', '2016'], 'top 5 de medallas olímpicas en 2016'),
+    'Anexo:Medallero de los Juegos Olímpicos de Río de Janeiro 2016');
+  assert.equal(bestListTitle(['Anexo:Ríos de Colombia', 'Anexo:Volcanes de Colombia'], ['volcan', 'colombia'], 'top 3 volcanes de Colombia'),
+    'Anexo:Volcanes de Colombia');
+  assert.equal(bestListTitle(['Anexo:Ríos de Colombia'], ['animales', 'peligro', 'colombia'], 'animales en peligro en Colombia'), null);
 });

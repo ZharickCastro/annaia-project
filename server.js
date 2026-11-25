@@ -3,6 +3,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import {
+  bestListTitle,
   chunkOf,
   classify,
   comparisonPair,
@@ -64,23 +65,29 @@ const DETAILED = 'Amplía la explicación con información nueva en un párrafo 
 const LIST = (n) => `Responde con una lista numerada de ${n} elementos, uno por línea ("1. ..."), en el orden del contexto (por ejemplo, de mayor a menor). ` +
   'Toma los nombres y las cifras solo del contexto; en las tablas las columnas van separadas por "|". ' +
   `Si el contexto trae menos de ${n}, da los que haya y dilo. Di en una frase qué criterio ordena la lista. Termina la última frase.`;
-const ACTIVITY = 'Guía al estudiante para hacer la actividad. Empieza con una frase sobre para qué sirve. ' +
-  'Si la actividad necesita objetos, escribe "Materiales:" en una línea, con cosas sencillas y baratas que se consigan en la comunidad; si es un ejercicio (por ejemplo, de matemáticas), resuélvelo mostrando cada operación. ' +
-  'Después da los pasos numerados, máximo 6, uno por línea y con verbos claros. ' +
+const ACTIVITY = 'Guía al estudiante para hacer la actividad. La primera línea es una sola frase corta (máximo 25 palabras) sobre el objetivo; no escribas párrafos antes de los pasos. ' +
+  'Si la actividad necesita objetos, escribe después "Materiales:" en una sola línea, con cosas sencillas y baratas que se consigan en la comunidad. ' +
+  'Luego da los pasos numerados, máximo 6, uno por línea, con verbos claros y frases cortas. ' +
   'Los pasos prácticos pueden venir de tu conocimiento general; los datos del tema (nombres, cifras, fechas) tómalos del contexto. ' +
-  'Termina con un consejo para presentarla o una pregunta para comprobar lo aprendido. ' +
+  'Termina con un consejo corto para presentarla. ' +
   'No digas que no encuentras la información: si el contexto no trae los pasos, propónlos tú.';
 const RECOMMEND = 'Da 3 recomendaciones concretas y prácticas, numeradas y una por línea, cada una con una frase de por qué ayuda. ' +
   'Piensa en un estudiante de una escuela rural, con pocos materiales y sin internet. ' +
   'Si una recomendación usa datos del tema, tómalos del contexto. No digas que no encuentras la información.';
 const TIMELINE = 'Haz una línea de tiempo: entre 4 y 7 fechas en orden, una por línea, con el formato "año: hecho" en pocas palabras. ' +
-  'Usa solo fechas que aparezcan en el contexto o en la conversación. Si no hay fechas suficientes, da las que haya y dilo.';
+  'Usa solo fechas que aparezcan en el contexto o en la conversación. Si no hay fechas suficientes, da las que haya y dilo en una frase corta. ' +
+  'Termina justo después de la última fecha: no comentes de dónde salió la información ni qué fechas faltan.';
+// Ejercicios de matemáticas: el modelo hace las cuentas; la biblioteca no aporta nada aquí.
+const EXERCISE = 'Resuelve el ejercicio paso a paso. Escribe pasos numerados, uno por línea, y en cada paso la operación con su resultado (por ejemplo: "3 × 5 = 15"). ' +
+  'No escribas materiales ni consejos. Termina con una línea "Resultado:" y la respuesta, simplificada si se puede.';
 const WRITING = 'Escribe el texto que pide el estudiante, en un lenguaje sencillo y apropiado para niños, de hasta 180 palabras, con un título corto en la primera línea. ' +
   'Si trata de un pueblo o una cultura, usa con respeto los datos del contexto y no inventes costumbres. ' +
   'No digas que no encuentras la información.';
 const COMPARE = 'Nombra las dos opciones. Comprueba primero si son alternativas o si una produce, contiene o utiliza la otra. Explica esa relación sin confundir la dirección de la transformación. ' +
   'Compara una propiedad por vez y conserva los matices de los artículos. No deduzcas rapidez, superioridad ni que algo ocurre siempre a partir de una definición. ' +
   'Explica directamente la relación con un ejemplo cotidiano en lugar de recitar definiciones. Solo si pide elegir, usa su objetivo como criterio. Si falta, da una orientación condicional o pregunta para qué lo necesita. Omite estadísticas, pronósticos y comentarios sobre los artículos salvo que los pidan. Usa hasta tres frases.';
+
+const COMPARE_WITH_ACTIVITY = 'Después de comparar, propone un experimento o una demostración sencilla en 3 pasos numerados, uno por línea, con materiales que se consigan en la comunidad.';
 
 const COMPARISON_REQUEST = /\b(?:compar(?:a|ar|e|en)(?:me|los?|las?)?|comparacion entre|diferencias? (?:hay )?entre|diferencian|versus|vs|(?:es|son|sera|funciona|resulta) (?:mejor|peor)|(?:cual|que) (?:conviene|prefieres))\b/;
 
@@ -326,11 +333,10 @@ async function listSources(question, previousSources, kind) {
   const keywords = [...new Set([...own, ...previous])];
   if (!keywords.length) return [];
   const hits = await searchKiwix(question, keywords, true);
-  // Por raíz: "medallas olímpicas" debe encontrar "Medallero histórico de los Juegos Olímpicos".
-  // Con varias palabras se exigen dos coincidencias, para no tomar "Ríos de Colombia" al pedir animales de Colombia.
-  const stems = keywords.map((k) => k.slice(0, 5));
-  const needed = Math.min(2, stems.length);
-  return hits.filter((h) => LIST_PAGE.test(h.title) && stems.filter((s) => normalize(h.title).includes(s)).length >= needed).slice(0, 1);
+  // Por raíz ("medallas olímpicas" → "Medallero histórico de los Juegos Olímpicos") y sin anexos de un país
+  // o un año que la pregunta no nombra (ver bestListTitle en contexto.js).
+  const best = bestListTitle(hits.map((h) => h.title), keywords, question);
+  return hits.filter((h) => h.title === best);
 }
 
 async function buildContext(question, previousSources, kind, part, history, referenced, subjects, intent = null) {
@@ -357,7 +363,8 @@ async function buildContext(question, previousSources, kind, part, history, refe
   const docs = await Promise.all(
     hits.map(async (h) => {
       const own = keywordsOf(h.title);
-      const related = (subjects ?? []).flatMap(keywordsOf)
+      const focusWords = subjects?.length ? subjects.flatMap(keywordsOf) : keywordsOf(question);
+      const related = focusWords
         .filter(word => word.length >= 4 && !own.includes(word)).map(word => word.slice(0, 6));
       // En un anexo o lista la información está en la tabla, también en preguntas como "¿y el segundo?".
       const format = LIST_PAGE.test(h.title) ? 'lista' : intent;
@@ -496,7 +503,7 @@ app.post('/api/ask', async (req, res) => {
   const started = Date.now();
   let answer = '';
   let sources = [];
-  let mode = !comparison && kind === 'charla' ? 'chat' : 'library';
+  let mode = !comparison && (kind === 'charla' || intent === 'ejercicio') ? 'chat' : 'library';
   try {
     let docs = [];
     // Si el planificador no responde, pedir los conceptos evita buscar «compararlos»
@@ -528,14 +535,17 @@ app.post('/api/ask', async (req, res) => {
     let contextualQuestion = questionForModel(question, kind, sources);
     if (subjects?.length) contextualQuestion += '\nConceptos de la comparación: ' + subjects.join(' y ');
     if (comparison && docs.length > 1) docs = await comparisonEvidence(docs, contextualQuestion).catch(() => docs);
-    const style = comparison ? COMPARE
+    // "¿Qué diferencia hay entre X y Y y cómo lo explico con un experimento?": comparar y además proponer la actividad.
+    const withActivity = comparison && intentOf(question) === 'actividad';
+    const style = comparison ? (withActivity ? COMPARE + ' ' + COMPARE_WITH_ACTIVITY : COMPARE)
       : intent === 'lista' ? LIST(listSize(question))
       : intent === 'actividad' ? ACTIVITY
       : intent === 'recomendacion' ? RECOMMEND
       : intent === 'cronologia' ? TIMELINE
       : intent === 'escritura' ? WRITING
+      : intent === 'ejercicio' ? EXERCISE
       : detail ? DETAILED : BRIEF;
-    const numPredict = intent === 'actividad' || intent === 'escritura' ? 320 : intent ? 260 : detail || comparison ? 224 : 128;
+    const numPredict = intent === 'actividad' || intent === 'escritura' || withActivity ? 400 : intent === 'ejercicio' ? 320 : intent ? 260 : detail || comparison ? 224 : 128;
     const messages = buildMessages(contextualQuestion, docs, history, mode, style);
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
