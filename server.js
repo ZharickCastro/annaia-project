@@ -566,6 +566,8 @@ app.post('/api/ask', async (req, res) => {
   }
 });
 
-app.listen(PORT, '127.0.0.1', () => {
-  console.log(`Anna IA backend en http://127.0.0.1:${PORT}`);
+// 0.0.0.0: los celulares del salón entran por la red del router (http://<IP del servidor>:PORT).
+const HOST = process.env.HOST ?? '0.0.0.0';
+app.listen(PORT, HOST, () => {
+  console.log(`Anna IA backend en http://${HOST}:${PORT}`);
 });
