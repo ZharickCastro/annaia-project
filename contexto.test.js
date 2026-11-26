@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chunkOf, classify, followUpDepth, keywordsOf, questionForModel, titleCandidates, trimHistory } from './contexto.js';
+import { bestListTitle, chunkOf, classify, comparisonPair, followUpDepth, intentOf, keywordsOf, listSize, questionForModel, tableText, titleCandidates, trimHistory } from './contexto.js';
 
 const VOLCAN = ['Volcán'];
 
@@ -84,4 +84,95 @@ test('los trozos se cortan en frases y no se repiten', () => {
   // Si el artículo se acaba, se queda en el último trozo en vez de devolver vacío.
   assert.equal(chunkOf(texto, 99, 35), chunkOf(texto, 1, 35));
   assert.equal(chunkOf('', 0, 35), '');
+});
+
+test('reconoce tops, actividades y recomendaciones', () => {
+  for (const q of ['Dame el top 5 de las medallas olímpicas', '¿Cuáles son los 3 ríos más largos de Colombia?', 'dime los diez países más poblados', 'ranking de goleadores']) {
+    assert.equal(intentOf(q), 'lista', q);
+  }
+  for (const q of ['¿Cómo hago una maqueta del sistema solar?', 'ayúdame con mi tarea de fracciones', 'pasos para hacer un experimento con plantas']) {
+    assert.equal(intentOf(q), 'actividad', q);
+  }
+  for (const q of ['Recomiéndame cómo estudiar para un examen', 'dame consejos para cuidar el agua']) {
+    assert.equal(intentOf(q), 'recomendacion', q);
+  }
+  for (const q of ['¿Qué es un volcán?', '¿Cuál es el río más largo de Colombia?']) {
+    assert.equal(intentOf(q), null, q);
+  }
+});
+
+test('el tamaño de la lista sale de la pregunta', () => {
+  assert.equal(listSize('top 5 de medallas'), 5);
+  assert.equal(listSize('los 3 ríos más largos'), 3);
+  assert.equal(listSize('los diez países más poblados'), 10);
+  assert.equal(listSize('ranking de goleadores'), 5);
+  assert.equal(listSize('top 50'), 10);
+});
+
+test('las palabras de formato no se buscan como tema', () => {
+  assert.deepEqual(keywordsOf('Dame el top 5 de las medallas olímpicas'), ['medallas', 'olimpicas']);
+  assert.ok(!titleCandidates('Dame el top 5 de las medallas olímpicas').includes('Top'));
+  assert.equal(titleCandidates('¿Cómo hago una maqueta del sistema solar?')[0], 'Sistema solar');
+  // "¿y el segundo?" o "dame el top 5" siguen hablando del tema anterior.
+  for (const q of ['¿y el segundo?', 'dame el top 5', 'dame consejos']) {
+    assert.equal(classify(q, ['Juegos Olímpicos']), 'seguimiento', q);
+  }
+});
+
+test('convierte la tabla de un ranking en texto', () => {
+  const html = '<p>Intro</p><table class="infobox"><tr><td>solo</td></tr></table>' +
+    '<table><tr><th>Puesto</th><th>País</th><th>Oro</th></tr>' +
+    '<tr><td>1</td><td><a href="#">Estados Unidos</a><sup>[1]</sup></td><td>1061</td></tr>' +
+    '<tr><td>2</td><td>Unión Soviética</td><td>395</td></tr></table>';
+  assert.equal(tableText(html, 500), 'Puesto | País | Oro\n1 | Estados Unidos | 1061\n2 | Unión Soviética | 395');
+  assert.equal(tableText(html, 50), 'Puesto | País | Oro\n1 | Estados Unidos | 1061');
+  assert.equal(tableText('<p>sin tablas</p>', 500), '');
+});
+
+test('preguntas complejas: títulos con "de", nombres propios y palabras sin tema', () => {
+  assert.equal(titleCandidates('Si mañana tengo que exponer sobre el ciclo del agua en La Guajira, ¿cómo organizo la exposición?')[0], 'Ciclo del agua');
+  assert.ok(titleCandidates('¿Por qué La Guajira es tan seca si está al lado del mar?').includes('La Guajira'));
+  assert.equal(titleCandidates('Necesito hacer una cartelera sobre los derechos de los niños')[0], 'Derechos de los niños');
+  assert.ok(titleCandidates('¿Cuáles fueron los 5 países con más medallas y por qué crees que Estados Unidos domina?').includes('Estados Unidos'));
+  assert.ok(!titleCandidates('¿Cuáles fueron los 5 países con más medallas y por qué crees que Estados Unidos domina?').includes('Estados Unidos domina'));
+});
+
+test('preguntas complejas: el tipo de respuesta', () => {
+  assert.equal(intentOf('¿Cuáles son las 7 maravillas del mundo moderno?'), 'lista');
+  assert.equal(intentOf('¿Cuáles fueron los 5 países con más medallas de oro y por qué?'), 'lista');
+  assert.equal(intentOf('Ayúdame a escribir un cuento corto sobre un niño wayuu que pastorea chivos'), 'escritura');
+  assert.equal(intentOf('hazme una línea de tiempo de eso'), 'cronologia');
+  assert.equal(intentOf('Si mañana tengo que exponer sobre el ciclo del agua, ¿qué materiales uso?'), 'actividad');
+  assert.equal(intentOf('¿Cómo resuelvo 3/4 + 2/5? Explícamelo paso a paso'), 'ejercicio');
+  assert.equal(intentOf('resuelve la ecuación 2x + 3 = 7'), 'ejercicio');
+  assert.equal(intentOf('¿Qué pasó entre 1810-1819?'), null);
+});
+
+test('una pregunta corta sin nombre propio sigue el tema anterior', () => {
+  assert.equal(classify('¿cómo se puede prevenir?', ['Diabetes']), 'relacionada');
+  assert.equal(classify('¿cuál de esas batallas fue la más importante?', ['Simón Bolívar']), 'relacionada');
+  // Pedir una definición o nombrar algo propio sí cambia de tema.
+  assert.equal(classify('¿Qué es la fotosíntesis?', ['Diabetes']), 'nueva');
+  assert.equal(classify('¿Dónde nació Gabriel García Márquez?', ['Diabetes']), 'nueva');
+});
+
+test('lee las dos opciones de una comparación', () => {
+  assert.deepEqual(comparisonPair('¿Qué diferencia hay entre la fotosíntesis y la respiración celular y cómo lo explico?'), ['Fotosíntesis', 'Respiración celular']);
+  assert.deepEqual(comparisonPair('compara el sol con la luna'), ['Sol', 'Luna']);
+  assert.deepEqual(comparisonPair('energía solar vs energía eólica'), ['Energía solar', 'Energía eólica']);
+  assert.deepEqual(comparisonPair('compáralos'), []);
+});
+
+test('para un top elige el anexo general y no el de un país o un año', () => {
+  // Títulos reales que devuelve Kiwix al buscar "países medallas olímpicas".
+  const titulos = ['Medalla olímpica', 'Anexo:Medallistas olímpicos de Venezuela',
+    'Anexo:Medallero de los Juegos Olímpicos de Río de Janeiro 2016', 'Argentina en los Juegos Olímpicos de Londres 2012',
+    'Anexo:Medallero histórico de los Juegos Olímpicos de verano'];
+  assert.equal(bestListTitle(titulos, ['paises', 'medallas', 'olimpicas'], 'Dame el top 5 de los países con más medallas olímpicas'),
+    'Anexo:Medallero histórico de los Juegos Olímpicos de verano');
+  assert.equal(bestListTitle(titulos, ['medallas', 'olimpicas', '2016'], 'top 5 de medallas olímpicas en 2016'),
+    'Anexo:Medallero de los Juegos Olímpicos de Río de Janeiro 2016');
+  assert.equal(bestListTitle(['Anexo:Ríos de Colombia', 'Anexo:Volcanes de Colombia'], ['volcan', 'colombia'], 'top 3 volcanes de Colombia'),
+    'Anexo:Volcanes de Colombia');
+  assert.equal(bestListTitle(['Anexo:Ríos de Colombia'], ['animales', 'peligro', 'colombia'], 'animales en peligro en Colombia'), null);
 });

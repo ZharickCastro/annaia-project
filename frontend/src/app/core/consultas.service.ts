@@ -67,7 +67,8 @@ export class ConsultasService {
     if (!pregunta || this.#cargando()) return;
 
     const anteriores = this.#mensajes();
-    const fuentesPrevias = anteriores.at(-1)?.fuentes ?? [];
+    // La última respuesta con fuentes: si Anna contestó sin biblioteca (un consejo, una aclaración), no se pierde el tema.
+    const fuentesPrevias = [...anteriores].reverse().find((m) => m.fuentes?.length)?.fuentes ?? [];
     const conversacion = anteriores
       .filter((m) => m.texto.trim())
       .slice(-MAX_HISTORIAL)
